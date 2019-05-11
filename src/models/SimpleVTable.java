@@ -25,14 +25,23 @@ public class SimpleVTable {
         }
     }
 
-    public String useVariable(String identifier){
+    public String getVarType(String identifier){
         for (HashMap hashTable : identifiersList){
             if(hashTable.get(identifier) != null){
                 return (String) hashTable.get(identifier);
             }
         }
-        System.out.println("Variabile " + identifier + " non dichiarata.");
         return "err";
+    }
+
+    public Boolean isVarDeclared(String identifier){
+        for (HashMap hashTable : identifiersList){
+            if(hashTable.get(identifier) != null){
+                return true;
+            }
+        }
+        System.out.println("Variabile " + identifier + " non dichiarata.");
+        return false;
     }
 
     public void scopeExit(){

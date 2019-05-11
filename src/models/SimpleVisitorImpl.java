@@ -23,7 +23,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		//get id of variable
 		String id = ctx.ID().getText();
 
-		simpleVTable.useVariable(id);
+		simpleVTable.getVarType(id);
 
 		//construct assignment expression
 		return new SimpleStmtAssignment(exp, id);
@@ -34,13 +34,19 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		String id = ctx.ID().getText();
 
-		LinkedList<String> expList = new LinkedList<>();
+		LinkedList<String> idList = new LinkedList<>();
+		LinkedList<String> typeList = new LinkedList<>();
 
 		for (SimpleParser.ExpContext exp : ctx.exp()){
-			expList.add(exp.getText());
+			typeList.add(visitExp(exp).getType());
+			if (exp.left.left.left.ID() != null && exp.op == null && exp.left.op == null && exp.left.left.op == null){
+				idList.add(exp.left.left.left.ID().getText());
+			} else {
+				idList.add(null);
+			}
 		}
 
-		simpleFTable.useFunction(id, expList, simpleVTable);
+		simpleFTable.useFunction(id, idList, typeList, simpleVTable);
 
 		return new SimpleStmtFunctioncall(id);
 	}
@@ -101,12 +107,11 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	}
 
 	@Override
-	public SimpleExp visitExp(SimpleParser.ExpContext ctx){
+	public SimpleStmtExp visitExp(SimpleParser.ExpContext ctx){
 		String leftType = "";
 		String rightType = "";
 
 		if(ctx.op == null){
-			//TODO check term
 			return new SimpleStmtExp(visitTerm(ctx.left).getType());
 		} else if(ctx.op.getText().equals("+") || ctx.op.getText().equals("-")){
 			leftType = visitTerm(ctx.left).getType();
@@ -174,7 +179,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
 			type = exp.getType();
 		} else if (ctx.ID() != null){
-			type = simpleVTable.useVariable(ctx.ID().getText());
+			type = simpleVTable.getVarType(ctx.ID().getText());
 		} else {
 			type = "err";
 		}
@@ -186,7 +191,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	public SimpleElementBase visitDeletion(SimpleParser.DeletionContext ctx) {
 
 		//construct delete expression with variable id
-		if (simpleVTable.useVariable(ctx.ID().getText()).equals("err") && !simpleFTable.checkFunction(ctx.ID().getText())){
+		if (simpleVTable.getVarType(ctx.ID().getText()).equals("err") && !simpleFTable.isFunDeclared(ctx.ID().getText())){
 			System.out.println("Delete su ID " + ctx.ID().getText() + " non dichiarato");
 		}
 

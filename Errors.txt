@@ -1,1 +1,1 @@
-syntax-error - line: 8, position: 0, message: missing ';' at '}'
+syntax-error - line: 7, position: 0, message: missing ';' at '}'

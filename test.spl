@@ -1,8 +1,7 @@
 {
     f(int x, bool y){
-        x = 3;
+        int p = 4;
     }
 
-    f(2, true)
-
+    f(2, false)
 }

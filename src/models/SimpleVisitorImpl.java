@@ -91,7 +91,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
 
 			if(!type.equals(exp.getType())){
-				System.out.println("Tipo della dichiarazione di " + id + " non compatibile con quello dell'espressione: ");
+				System.out.println("Tipo della dichiarazione di " + id + " non compatibile con quello dell'espressione ");
 			}
 
 			simpleVTable.newIdentifierDeclaration(id, type);
@@ -107,7 +107,12 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		if(ctx.op == null){
 			type = visitTerm(ctx.left).getType();
 		} else if(ctx.op.getText().equals("+") || ctx.op.getText().equals("-")){
-			type = checkInt(ctx.left.getText(), ctx.right.getText());
+			if (ctx.right.exp() != null){
+				SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
+				type = exp.getType();
+			} else {
+				type = checkInt(ctx.left.getText(), ctx.right.getText());
+			}
 		} else {
 			System.out.println("Error visitExp");
 		}
@@ -121,8 +126,13 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		if(ctx.op == null){
 			type = visitFactor(ctx.left).getType();
-		} else if(ctx.op.getText() == "*" || ctx.op.getText() == "/"){
-			type = checkInt(ctx.left.getText(), ctx.right.getText());
+		} else if(ctx.op.getText().equals("*") || ctx.op.getText().equals("/")){
+			if (ctx.right.term() != null){
+				SimpleStmtExp term = visitTerm(ctx.right.term());
+				type = term.getType();
+			} else {
+				type = checkInt(ctx.left.getText(), ctx.right.getText());
+			}
 		} else {
 			System.out.println("Error visitExp");
 		}
@@ -138,9 +148,19 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		if(ctx.ROP() == null && ctx.op == null){
 			type = visitValue(ctx.left).getType();
 		} else if (ctx.op != null){
-			type = checkBool(ctx.left.getText(), ctx.right.getText());
-		} else if (ctx.ROP().getSymbol() != null){
-			type = checkInt(ctx.left.getText(), ctx.right.getText());
+			if (ctx.right.exp() != null){
+				SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.right.exp());
+				type = exp.getType();
+			} else {
+				type = checkBool(ctx.left.getText(), ctx.right.getText());
+			}
+		} else if (ctx.ROP().getSymbol() != null) {
+			if (ctx.right.exp() != null) {
+				SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.right.exp());
+				type = exp.getType();
+			} else {
+				type = checkInt(ctx.left.getText(), ctx.right.getText());
+			}
 		}
 
 		return new SimpleStmtExp(type);
@@ -152,7 +172,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		if(ctx.INTEGER() != null){
 			type = "int";
-		} else if (ctx.getText() == "true" || ctx.getText() == "false"){
+		} else if (ctx.getText().equals("true") || ctx.getText().equals("false")){
 			type = "bool";
 		} else if (ctx.exp() != null){
 			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());

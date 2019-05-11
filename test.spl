@@ -1,4 +1,5 @@
 {
-    bool x = true && false;
-    int y = 3+4+5+3+4;
+    bool x = true && false && 10;
+
+    int y = 3+4+5+3+4+true;
 }

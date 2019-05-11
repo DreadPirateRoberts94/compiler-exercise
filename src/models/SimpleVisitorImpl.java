@@ -90,8 +90,8 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
 
-			if( type != exp.getType()){
-				System.out.println("Tipo dell'espressione non compatibile con la dichiarazione.");
+			if(!type.equals(exp.getType())){
+				System.out.println("Tipo della dichiarazione di " + id + " non compatibile con quello dell'espressione: ");
 			}
 
 			simpleVTable.newIdentifierDeclaration(id, type);
@@ -106,8 +106,8 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		if(ctx.op == null){
 			type = visitTerm(ctx.left).getType();
-		} else if(ctx.op.getText() == "+" || ctx.op.getText() == "-"){
-			type = "int";
+		} else if(ctx.op.getText().equals("+") || ctx.op.getText().equals("-")){
+			type = checkInt(ctx.left.getText(), ctx.right.getText());
 		} else {
 			System.out.println("Error visitExp");
 		}
@@ -122,7 +122,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		if(ctx.op == null){
 			type = visitFactor(ctx.left).getType();
 		} else if(ctx.op.getText() == "*" || ctx.op.getText() == "/"){
-			type = "int";
+			type = checkInt(ctx.left.getText(), ctx.right.getText());
 		} else {
 			System.out.println("Error visitExp");
 		}
@@ -135,9 +135,49 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	public SimpleStmtExp visitFactor(SimpleParser.FactorContext ctx){
 		String type = "";
 
-		if(ctx.ROP().getSymbol() == null);
+		if(ctx.ROP() == null && ctx.op == null){
+			type = visitValue(ctx.left).getType();
+		} else if (ctx.op != null){
+			type = checkBool(ctx.left.getText(), ctx.right.getText());
+		} else if (ctx.ROP().getSymbol() != null){
+			type = checkInt(ctx.left.getText(), ctx.right.getText());
+		}
 
 		return new SimpleStmtExp(type);
+	}
+
+	@Override
+	public SimpleStmtExp visitValue(SimpleParser.ValueContext ctx){
+		String type = "";
+
+		if(ctx.INTEGER() != null){
+			type = "int";
+		} else if (ctx.getText() == "true" || ctx.getText() == "false"){
+			type = "bool";
+		} else if (ctx.exp() != null){
+			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
+			type = exp.getType();
+		}
+
+		return new SimpleStmtExp(type);
+	}
+
+	public String checkInt(String left, String right){
+		if ((!left.equals("true") && !left.equals("false") &&
+				!right.equals("true") && !right.equals("false"))){
+			return  "int";
+		} else {
+			return "bool";
+		}
+	}
+
+	public String checkBool(String left, String right){
+		if ((left.equals("true") || left.equals("false") &&
+				right.equals("true") || right.equals("false"))){
+			return "bool";
+		} else {
+			return "int";
+		}
 	}
 
 

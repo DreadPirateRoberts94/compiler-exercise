@@ -31,13 +31,13 @@ type   		: 'int'
 
 parameter  	: ('var')? type ID ;
 
-exp    		:  ('-')? left=term (op=('+' | '-') right=exp)? ;
+exp    		: ('-')? left=term (op=('+' | '-') right=exp)? ;
    
 term   		: left=factor (op=('*' | '/') right=term)? ;
    
 factor 		: left=value (op=ROP right=value)?    
-	          |   left=value (op=('&&' | '||') right=value)? ; 
-   
+	          |   left=value (op=('&&' | '||') right=value)? ;
+
 value  		: INTEGER
      		  | ( 'true' | 'false' )
       		  | '(' exp ')' 

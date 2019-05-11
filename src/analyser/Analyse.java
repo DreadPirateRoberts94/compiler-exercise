@@ -6,8 +6,6 @@ import java.util.List;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import parser.*;
-import models.Environment;
-import models.SemanticError;
 import models.SimpleStmtBlock;
 import models.SimpleVisitorImpl;
 

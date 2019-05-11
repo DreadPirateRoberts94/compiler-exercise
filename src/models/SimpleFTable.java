@@ -37,7 +37,7 @@ public class SimpleFTable {
                     //check if function is called with the right number of parameters
                     if (paramList.size() == hashTable.get(identifier).size()){
                         //get type of actual param
-                        String actualType = simpleVTable.useVariable(paramList.get(i)).toString();
+                        String actualType = simpleVTable.useVariable(paramList.get(i));
                         //if actualType is null then it wasn't declared
                         if (actualType != null){
                             //check type conformity (formal and actual params)

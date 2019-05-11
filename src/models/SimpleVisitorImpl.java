@@ -102,68 +102,64 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 	@Override
 	public SimpleExp visitExp(SimpleParser.ExpContext ctx){
-		String type = "";
+		String leftType = "";
+		String rightType = "";
 
 		if(ctx.op == null){
-			type = visitTerm(ctx.left).getType();
+			//TODO check term
+			return new SimpleStmtExp(visitTerm(ctx.left).getType());
 		} else if(ctx.op.getText().equals("+") || ctx.op.getText().equals("-")){
-			if (ctx.right.exp() != null){
-				SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
-				type = exp.getType();
-			} else {
-				type = checkInt(ctx.left.getText(), ctx.right.getText());
-			}
+			leftType = visitTerm(ctx.left).getType();
+			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.right);
+			rightType = exp.getType();
+			return  new SimpleStmtExp(leftType.equals(rightType) ? "int" : "err");
 		} else {
 			System.out.println("Error visitExp");
 		}
 
-		return new SimpleStmtExp(type);
+		return new SimpleStmtExp("err");
 	}
 
 	@Override
 	public SimpleStmtExp visitTerm(SimpleParser.TermContext ctx){
-		String type = "";
+		String leftType = "";
+		String rightType = "";
 
 		if(ctx.op == null){
-			type = visitFactor(ctx.left).getType();
+			return new SimpleStmtExp(visitFactor(ctx.left).getType());
 		} else if(ctx.op.getText().equals("*") || ctx.op.getText().equals("/")){
-			if (ctx.right.term() != null){
-				SimpleStmtExp term = visitTerm(ctx.right.term());
-				type = term.getType();
-			} else {
-				type = checkInt(ctx.left.getText(), ctx.right.getText());
-			}
+				SimpleStmtExp rightTerm = visitTerm(ctx.right);
+				rightType = rightTerm.getType();
+				leftType = visitFactor(ctx.left).getType();
+			return  new SimpleStmtExp(leftType.equals(rightType) ? "int" : "err");
 		} else {
 			System.out.println("Error visitExp");
 		}
 
-		return new SimpleStmtExp(type);
+		return new SimpleStmtExp("err");
 
 	}
 
 	@Override
 	public SimpleStmtExp visitFactor(SimpleParser.FactorContext ctx){
-		String type = "";
+		String leftType = "";
+		String rightType = "";
 
 		if(ctx.ROP() == null && ctx.op == null){
-			type = visitValue(ctx.left).getType();
-		} else if (ctx.op != null){
-			if (ctx.right.exp() != null){
-				SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.right.exp());
-				type = exp.getType();
-			} else {
-				type = checkBool(ctx.left.getText(), ctx.right.getText());
-			}
-		} else if (ctx.ROP().getSymbol() != null) {
-			if (ctx.right.exp() != null) {
-				SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.right.exp());
-				type = exp.getType();
-			} else {
-				type = checkInt(ctx.left.getText(), ctx.right.getText());
+			return  new SimpleStmtExp(visitValue(ctx.left).getType());
+		} else {
+			leftType = visitValue(ctx.left).getType();
+			rightType = visitValue(ctx.right).getType();
+
+			if (ctx.op != null && (ctx.op.getText().equals("&&") || ctx.op.getText().equals("||"))){
+
+				return new SimpleStmtExp((leftType.equals(rightType)) && leftType.equals("bool") ? "bool" : "err");
+			}else if (ctx.ROP() != null && ctx.ROP().getSymbol() != null){
+				return new SimpleStmtExp((leftType.equals(rightType)) && leftType.equals("int") ? "bool" : "err");
 			}
 		}
 
-		return new SimpleStmtExp(type);
+		return new SimpleStmtExp("err");
 	}
 
 	@Override
@@ -177,29 +173,14 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		} else if (ctx.exp() != null){
 			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
 			type = exp.getType();
+		} else if (ctx.ID() != null){
+			type = simpleVTable.useVariable(ctx.ID().getText());
+		} else {
+			type = "err";
 		}
 
 		return new SimpleStmtExp(type);
 	}
-
-	private String checkInt(String left, String right){
-		if ((!left.equals("true") && !left.equals("false") &&
-				!right.equals("true") && !right.equals("false"))){
-			return  "int";
-		} else {
-			return "bool";
-		}
-	}
-
-	private String checkBool(String left, String right){
-		if ((left.equals("true") || left.equals("false") &&
-				right.equals("true") || right.equals("false"))){
-			return "bool";
-		} else {
-			return "int";
-		}
-	}
-
 
 	@Override
 	public SimpleElementBase visitDeletion(SimpleParser.DeletionContext ctx) {

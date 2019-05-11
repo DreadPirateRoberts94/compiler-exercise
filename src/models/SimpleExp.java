@@ -17,7 +17,8 @@ public abstract class SimpleExp extends SimpleElementBase {
 	 * @return an integer which is the value of the expression
 	 */
 	public abstract int getValue(Environment e);
-	
+
+
 	@Override
 	public BTBase inferBehavior(Environment e) {
 		

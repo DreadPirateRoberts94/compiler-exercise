@@ -88,10 +88,56 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 			String value = ctx.exp().getText();
 
+			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
+
+			if( type != exp.getType()){
+				System.out.println("Tipo dell'espressione non compatibile con la dichiarazione.");
+			}
+
 			simpleVTable.newIdentifierDeclaration(id, type);
 
 			return new SimpleStmtDeclaration(value);
 		}
+	}
+
+	@Override
+	public SimpleExp visitExp(SimpleParser.ExpContext ctx){
+		String type = "";
+
+		if(ctx.op == null){
+			type = visitTerm(ctx.left).getType();
+		} else if(ctx.op.getText() == "+" || ctx.op.getText() == "-"){
+			type = "int";
+		} else {
+			System.out.println("Error visitExp");
+		}
+
+		return new SimpleStmtExp(type);
+	}
+
+	@Override
+	public SimpleStmtExp visitTerm(SimpleParser.TermContext ctx){
+		String type = "";
+
+		if(ctx.op == null){
+			type = visitFactor(ctx.left).getType();
+		} else if(ctx.op.getText() == "*" || ctx.op.getText() == "/"){
+			type = "int";
+		} else {
+			System.out.println("Error visitExp");
+		}
+
+		return new SimpleStmtExp(type);
+
+	}
+
+	@Override
+	public SimpleStmtExp visitFactor(SimpleParser.FactorContext ctx){
+		String type = "";
+
+		if(ctx.ROP().getSymbol() == null);
+
+		return new SimpleStmtExp(type);
 	}
 
 

@@ -23,7 +23,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		//get id of variable
 		String id = ctx.ID().getText();
 
-		simpleVTable.getVarType(id);
+		simpleVTable.isVarDeclared(id);
 
 		//construct assignment expression
 		return new SimpleStmtAssignment(exp, id);

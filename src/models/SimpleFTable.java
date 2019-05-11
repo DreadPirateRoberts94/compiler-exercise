@@ -42,15 +42,12 @@ public class SimpleFTable {
             } else {
                 for (String actualParamId : actualParamIdList){
                     if (formalParamList.get(paramIndex).var){
-                        if (!simpleVTable.isVarDeclared(actualParamId)){
+                        if (actualParamIdList.get(paramIndex) != null && !simpleVTable.isVarDeclared(actualParamId)){
                             System.out.println("Parametro attuale non può essere passato per riferimento.");
                         }
                     }
 
-                    System.out.println(formalParamList.get(paramIndex).type);
-                    System.out.println(simpleVTable.getVarType(actualParamTypeList.get(paramIndex)));
-
-                    if (!formalParamList.get(paramIndex).type.equals(simpleVTable.getVarType(actualParamTypeList.get(paramIndex)))){
+                    if (!formalParamList.get(paramIndex).type.equals(actualParamTypeList.get(paramIndex))){
                         System.out.println("Tipo del parametro attuale non conforme");
                     }
                     paramIndex++;

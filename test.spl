@@ -1,7 +1,14 @@
 {
-    f(int x, bool y){
+    f(int x, var int y){
         int p = 4;
+        x = 2;
     }
 
-    f(2, false)
+    int x = 2;
+
+    delete x;
+
+    f(true, false)
+
+    delete f;
 }

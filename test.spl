@@ -1,0 +1,17 @@
+{
+    f(var int x, bool y){
+        p = 5;
+    }
+
+    int x = 2;
+
+    delete x;
+
+    int x = 4;
+
+    int y = 7;
+
+    f(x, y);
+
+    g(4);
+}

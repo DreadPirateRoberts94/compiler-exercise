@@ -162,7 +162,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		return new SimpleStmtExp(type);
 	}
 
-	public String checkInt(String left, String right){
+	private String checkInt(String left, String right){
 		if ((!left.equals("true") && !left.equals("false") &&
 				!right.equals("true") && !right.equals("false"))){
 			return  "int";
@@ -171,7 +171,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		}
 	}
 
-	public String checkBool(String left, String right){
+	private String checkBool(String left, String right){
 		if ((left.equals("true") || left.equals("false") &&
 				right.equals("true") || right.equals("false"))){
 			return "bool";

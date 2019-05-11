@@ -30,32 +30,26 @@ public class SimpleFTable {
         }
     }
 
-    public void useFunction(String identifier, LinkedList<String> paramList, SimpleVTable simpleVTable){
+    public String useFunction(String identifier, LinkedList<String> paramList, SimpleVTable simpleVTable){
         for (HashMap<String, List<Tuple<String, String>>> hashTable : identifiersList){
             if(hashTable.get(identifier) != null){
-                for (int i = 0; i < hashTable.get(identifier).size(); i++){
-                    //check if function is called with the right number of parameters
-                    if (paramList.size() == hashTable.get(identifier).size()){
-                        //get type of actual param
-                        String actualType = simpleVTable.useVariable(paramList.get(i));
-                        //if actualType is null then it wasn't declared
-                        if (actualType != null){
-                            //check type conformity (formal and actual params)
-                            if (!hashTable.get(identifier).get(i).type.equals(actualType)){
-                                System.out.println("Funzione " + identifier + " chiamata con parametro " + paramList.get(i) + " non conforme al tipaggio");
-                            }
-                        } else {
-                            System.out.println("Funzione " + identifier + " chiamata con parametro " + paramList.get(i) + " non dichiarato");
-                        }
-                    } else {
-                        System.out.println("Funzione " + identifier + " chiamata con numero errato di parametri");
-                        return;
-                    }
+                if (paramList != null){
+
                 }
-                return;
+                return hashTable.get(identifier).toString();
             }
         }
         System.out.println("Funzione " + identifier + " non dichiarata.");
+        return "err";
+    }
+
+    public boolean checkFunction(String identifier){
+        for (HashMap hashTable : identifiersList){
+            if(hashTable.get(identifier) != null){
+                return true;
+            }
+        }
+        return false;
     }
 
     public void scopeExit(){

@@ -186,6 +186,9 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	public SimpleElementBase visitDeletion(SimpleParser.DeletionContext ctx) {
 
 		//construct delete expression with variable id
+		if (simpleVTable.useVariable(ctx.ID().getText()).equals("err") && !simpleFTable.checkFunction(ctx.ID().getText())){
+			System.out.println("Delete su ID " + ctx.ID().getText() + " non dichiarato");
+		}
 
 		return new SimpleStmtDelete(ctx.ID().getText());
 	}

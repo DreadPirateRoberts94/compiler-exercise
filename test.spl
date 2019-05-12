@@ -6,18 +6,28 @@
         foo() {
 
 
-            g(){ int y = 3;}
+            g(){
+                int y = 3;
+                print y;
+            }
+
+            print y;
 
             g();
         }
 
         foo();
+
         delete foo();
     }
 
     int x = 2;
 
     delete x;
+
+    print f;
+
+    print x;
 
     f(2, x)
 

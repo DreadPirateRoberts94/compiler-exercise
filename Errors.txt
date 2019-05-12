@@ -1,2 +1,2 @@
-syntax-error - line: 15, position: 18, message: mismatched input '(' expecting ';'
-syntax-error - line: 24, position: 4, message: missing ';' at 'delete'
+syntax-error - line: 20, position: 18, message: mismatched input '(' expecting ';'
+syntax-error - line: 33, position: 4, message: missing ';' at 'delete'

@@ -218,8 +218,14 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		//get expression
 		SimpleExp exp = (SimpleExp) visit(ctx.exp());
 
-		//construct print exp
+		//construct delete expression with variable id
+		if (ctx.exp().left.left.left.ID() != null){
+			if (simpleVTable.getVarType(ctx.exp().left.left.left.ID().getText()).equals("err")){
+				System.out.println("Print su ID " + ctx.exp().left.left.left.ID().getText() + " non dichiarato");
+			}
+		}
 
+		//construct print exp
 		return new SimpleStmtPrint(exp);
 	}
 }

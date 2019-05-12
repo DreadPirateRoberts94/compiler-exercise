@@ -8,19 +8,22 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SimpleFTable {
-    private List<HashMap<String, List<Tuple<Boolean, String, String>>>> fTable = new LinkedList<>();
+    public List<HashMap<String, List<Tuple<Boolean, String, String>>>> fTable = new LinkedList<>();
 
     public void scopeEntry(){
         fTable.add(new HashMap<>());
     }
 
-    public void newFunctionDeclaration(String identifier, List<SimpleParser.ParameterContext> paramList){
+    public void newFunctionDeclaration(String identifier, List<SimpleParser.ParameterContext> paramList, SimpleVTable simpleVTable, Boolean mustScopeBeDeclared){
         int blockNumber = fTable.size()-1;
+        if(mustScopeBeDeclared){ simpleVTable.scopeEntry(); }
+
         if(!isFunDeclared(identifier)){
 
             List<Tuple<Boolean, String, String>> tupleList = new LinkedList<>();
             for (SimpleParser.ParameterContext param : paramList){
                 tupleList.add(new Tuple<>(param.getText().startsWith("var") , param.type().getText(), param.ID().getText()));
+                simpleVTable.newIdentifierDeclaration(param.ID().getText(), param.type().getText() );
             }
 
             fTable.get(blockNumber).put(identifier, tupleList);

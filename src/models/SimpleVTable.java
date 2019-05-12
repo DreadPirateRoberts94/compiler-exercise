@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SimpleVTable {
-    private List<HashMap> identifiersList = new LinkedList<HashMap>();
+    public List<HashMap> identifiersList = new LinkedList<HashMap>();
 
     public void scopeEntry(){
         identifiersList.add(new HashMap());

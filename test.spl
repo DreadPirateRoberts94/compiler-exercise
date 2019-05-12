@@ -2,13 +2,24 @@
     f(int x, var int y){
         int p = 4;
         x = 2;
+
+        foo() {
+
+
+            g(){ int y = 3;}
+
+            g();
+        }
+
+        foo();
+        delete foo();
     }
 
     int x = 2;
 
     delete x;
 
-    f(true, false)
+    f(2, x)
 
     delete f;
 }

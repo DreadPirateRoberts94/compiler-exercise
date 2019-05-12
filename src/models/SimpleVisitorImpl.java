@@ -9,6 +9,12 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	private SimpleVTable simpleVTable = new SimpleVTable();
 	private SimpleFTable simpleFTable = new SimpleFTable();
 
+	private Boolean hasScopeBeenAlreadyDeclared = false;
+
+	public SimpleVisitorImpl(){
+		simpleFTable.scopeEntry();
+	}
+
 	@Override
 	public SimpleElementBase visitStatement(SimpleParser.StatementContext ctx) {
 		//visit the first child, this works for every case
@@ -56,10 +62,16 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		//list for saving children statements
 		List<SimpleStmt> children = new LinkedList<SimpleStmt>();
-
 		//A new HashMap will be created on the tail of the HashTable List
-		simpleVTable.scopeEntry();
+		if(!hasScopeBeenAlreadyDeclared){
+			simpleVTable.scopeEntry();
+		} else {
+			hasScopeBeenAlreadyDeclared = false;
+		}
 		simpleFTable.scopeEntry();
+
+
+		System.out.println("SimpleVTable " + simpleVTable.identifiersList);
 
 		//visit each children
 		for (SimpleParser.StatementContext stmtCtx : ctx.statement())
@@ -70,6 +82,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		simpleVTable.scopeExit();
 		simpleFTable.scopeExit();
+		System.out.println("SimpleVTable " +simpleVTable.identifiersList);
 
 		return block;
 	}
@@ -79,8 +92,8 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 			String id = ctx.ID().getText();
 
 			List<SimpleParser.ParameterContext> paramList = ctx.parameter();
-
-			simpleFTable.newFunctionDeclaration(id, paramList);
+			if(paramList.size() > 0) hasScopeBeenAlreadyDeclared = true;
+			simpleFTable.newFunctionDeclaration(id, paramList, simpleVTable, hasScopeBeenAlreadyDeclared);
 
 			//Visit fun block
 			SimpleStmtBlock block = (SimpleStmtBlock) visit(ctx.block());

@@ -1,8 +1,12 @@
 package models;
 
+import javafx.util.Pair;
 import parser.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
@@ -71,8 +75,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		simpleFTable.scopeEntry();
 
 
-		System.out.println("SimpleVTable " + simpleVTable.identifiersList);
-
 		//visit each children
 		for (SimpleParser.StatementContext stmtCtx : ctx.statement())
 			children.add((SimpleStmt) visitStatement(stmtCtx));
@@ -82,10 +84,57 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		simpleVTable.scopeExit();
 		simpleFTable.scopeExit();
-		System.out.println("SimpleVTable " +simpleVTable.identifiersList);
 
 		return block;
 	}
+
+	public Pair<List<String> , List<String>> getDeleteInsideBlock(SimpleParser.BlockContext ctx, Pair<List<String> , List<String>> identifiers) {
+
+		for(SimpleParser.StatementContext stmntContext : ctx.statement() ){
+			if(stmntContext.declaration() != null ){
+				identifiers = getDeleteInsideDeclaration(stmntContext.declaration(), identifiers);
+			} else if (stmntContext.block() != null){
+				identifiers = getDeleteInsideBlock(stmntContext.block(), identifiers);
+			} else if (stmntContext.ifthenelse() != null){
+				identifiers = getDeleteInsideIfThenElse(stmntContext.ifthenelse(), identifiers);
+			} else if (stmntContext.deletion() != null) {
+				identifiers = getDeleteIdentifier(stmntContext.deletion(), identifiers);
+			}
+		}
+		return identifiers;
+	}
+
+	public Pair<List<String> , List<String>> getDeleteIdentifier(SimpleParser.DeletionContext ctx, Pair<List<String> , List<String>> identifiers){
+		identifiers.getKey().add(ctx.ID().getText());
+		return identifiers;
+	}
+
+	public Pair<List<String> , List<String>> getDeleteInsideDeclaration(SimpleParser.DeclarationContext ctx, Pair<List<String> , List<String>> identifiers){
+		//TODO get var parameter
+		if(ctx.parameter().size() > 0){
+			for(SimpleParser.ParameterContext parameter : ctx.parameter()){
+				if(parameter.getText().startsWith("var")){
+					identifiers.getValue().add(parameter.ID().getText());
+				}
+			}
+		}
+
+		if(ctx.block() != null){
+			identifiers = getDeleteInsideBlock(ctx.block(), identifiers);
+		}
+		return  identifiers;
+	}
+
+	public Pair<List<String> , List<String>> getDeleteInsideIfThenElse(SimpleParser.IfthenelseContext ctx, Pair<List<String> , List<String>> identifiers){
+		if(ctx.block().size() > 0){
+			for(SimpleParser.BlockContext block : ctx.block()){
+				identifiers.getKey().addAll(getDeleteInsideBlock(block, identifiers).getKey());
+			}
+		}
+
+		return identifiers;
+	}
+
 
 	public SimpleElementBase visitDeclaration(SimpleParser.DeclarationContext ctx) {
 		if (ctx.type() == null){
@@ -93,7 +142,20 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 			List<SimpleParser.ParameterContext> paramList = ctx.parameter();
 			if(paramList.size() > 0) hasScopeBeenAlreadyDeclared = true;
+
+			//TODO get delete id
+			// first list is the list of deleted id, second one are eventual var parameter from inner function
+			Pair<List<String> , List<String>> identifiers = getDeleteInsideBlock(ctx.block(), new Pair<>(new LinkedList<String>(), new LinkedList<String>()));
+
 			simpleFTable.newFunctionDeclaration(id, paramList, simpleVTable, hasScopeBeenAlreadyDeclared);
+
+			List<String> varParams = simpleFTable.getFunctionVarParam(ctx.ID().getText()).stream()
+					.filter(identifiers.getValue()::contains)
+					.collect(Collectors.toList());
+
+
+			System.out.println("qua "+ ctx.ID().getText() + varParams);
+
 
 			//Visit fun block
 			SimpleStmtBlock block = (SimpleStmtBlock) visit(ctx.block());
@@ -206,8 +268,12 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		//construct delete expression with variable id
 		if (simpleVTable.getVarType(ctx.ID().getText()).equals("err") && !simpleFTable.isFunDeclared(ctx.ID().getText())){
 			System.out.println("Delete su ID " + ctx.ID().getText() + " non dichiarato");
+		} else {
+			String identifierToDelete = ctx.ID().getText();
+			simpleVTable.deleteIdentifier(identifierToDelete);
 		}
 
+		System.out.println(simpleVTable.identifiersList);
 		return new SimpleStmtDelete(ctx.ID().getText());
 	}
 

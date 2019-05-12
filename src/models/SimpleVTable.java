@@ -16,6 +16,25 @@ public class SimpleVTable {
         identifiersList.add(new HashMap());
     }
 
+    public Boolean deleteIdentifier(String identifier){
+        int identifierToDelete = -1;
+        int identifierIndex = 0;
+
+        for(HashMap hashTable : identifiersList){
+            if(hashTable.get(identifier) != null){
+                identifierToDelete = identifierIndex;
+            }
+            identifierIndex++;
+        }
+
+        if(identifierToDelete != -1){
+            identifiersList.get(identifierToDelete).remove(identifier);
+            return true;
+        }
+
+        return false;
+    }
+
     public void newIdentifierDeclaration(String identifier, String type){
         int blockNumber = identifiersList.size()-1;
         if(identifiersList.get(blockNumber).get(identifier) == null){

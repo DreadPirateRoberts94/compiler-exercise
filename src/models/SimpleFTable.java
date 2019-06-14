@@ -37,6 +37,22 @@ public class SimpleFTable {
         }
     }
 
+    public List<String> getFunctionVarParam(String identifier){
+        List<String> identifiers = new LinkedList<String>();
+
+        for(HashMap block : fTable){
+            if(block.get(identifier) != null){
+                List<Tuple<Boolean, String, String>> hashMap = (List<Tuple<Boolean, String, String>>) block.get(identifier);
+                for(Tuple<Boolean, String, String> param : hashMap){
+                    if(param.var){
+                        identifiers.add(param.value);
+                    }
+                }
+            }
+        }
+        return identifiers;
+    }
+
     public void useFunction(String identifier, LinkedList<String> actualParamIdList, LinkedList<String> actualParamTypeList, SimpleVTable simpleVTable){
         if (!isFunDeclared(identifier)){
             System.out.println("Funzione " + identifier + " non dichiarata.");

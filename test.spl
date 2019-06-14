@@ -2,7 +2,6 @@
 
     q(var int v){
         delete v;
-        delete v;
     }
 
     f(var int x){

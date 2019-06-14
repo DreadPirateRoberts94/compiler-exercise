@@ -90,15 +90,16 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
                             List<String> formalParamsPrevFunction = simpleFTable.getFunctionFormalParams(functionCallStack.getIdentifierNthFunction(i));
                             System.out.println("formal params: " + formalParamsPrevFunction + " fun id: " +  functionCallStack.getIdentifierNthFunction(i));
 
+                            String tmp = params.get(j);
 
-                            if (formalParamsPrevFunction.indexOf(params.get(j)) != -1) {
-                                params.set(j, actualsParamsPrevFunction.get(i));
+                            if (formalParamsPrevFunction.indexOf(tmp) != -1) {
+                                params.set(j, actualsParamsPrevFunction.get(j));
                                 break;
                             }
                         }
                     }
                 }
-                System.out.println("function called -> "+ id +" with params " +params +"\n insidedeclaration: "+ insideDeclaration+"\n");
+                System.out.println("function called -> "+ id +" with params " + params +"\n insidedeclaration: "+ insideDeclaration+"\n");
 
                 //System.out.println("ID funzione: " + id + "\nparametri: " + params +"\ntypelist: " +typeList + "\n");
 
@@ -296,18 +297,16 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		return new SimpleStmtExp(type);
 	}
 
+
 	@Override
 	public SimpleElementBase visitDeletion(SimpleParser.DeletionContext ctx) {
 
-
-
-        System.out.println(insideDeclaration);
+        System.out.println("Deleting...");
 
         if(insideDeclaration == 0){
 
             //construct delete expression with variable id
-
-			            String id = ctx.ID().getText();
+			String id = ctx.ID().getText();
 
             for(int i = functionCallStack.size()-1; i >= 0; i--){
                 List<String> actualParams = functionCallStack.getActualParamsNthFunction(i);
@@ -315,16 +314,17 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
                 System.out.println("Function: "+ functionCallStack.getIdentifierNthFunction(i)+" parametri attuali "+ actualParams +" parametri formali " + formalParams);
 
-
-
                 for (String formalParam: formalParams) {
-                    if(id.equals(formalParam)){
+					if(id.equals(formalParam)){
                         String actualParam = actualParams.get(formalParam.indexOf(formalParam));
-                        simpleVTable.deleteIdentifier(actualParam);
+						if (simpleVTable.getVarType(actualParam).equals("err")){
+							System.out.println("Delete su ID " + actualParam + " non dichiarato");
+						} else {
+							simpleVTable.deleteIdentifier(actualParam);
+						}
                         return new SimpleStmtDelete(ctx.ID().getText());
                     }
                 }
-
             }
 
             if (simpleVTable.getVarType(ctx.ID().getText()).equals("err")){

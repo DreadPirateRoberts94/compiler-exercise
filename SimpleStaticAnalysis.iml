@@ -7,10 +7,10 @@
     </content>
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../../../../compiler-exercise/antlr-4.7.1-complete.jar!/" />
+          <root url="jar://$USER_HOME$/Downloads/antlr-4.7.2-complete.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

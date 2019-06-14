@@ -1,5 +1,8 @@
 package models;
 
+import javafx.util.Pair;
+import models.Utilities.FunctionInfo;
+import models.Utilities.Tuple;
 import parser.*;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,7 +12,17 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	private SimpleVTable simpleVTable = new SimpleVTable();
 	private SimpleFTable simpleFTable = new SimpleFTable();
 
+	private SimpleFInvocationTable functionsInfo = new SimpleFInvocationTable();
+
+	private FunctionCallStack functionCallStack = new FunctionCallStack();
+
 	private Boolean hasScopeBeenAlreadyDeclared = false;
+
+	private String identifier = null;
+
+	private int insideDeclaration = 0;
+
+	private int insidecall = 0;
 
 	public SimpleVisitorImpl(){
 		simpleFTable.scopeEntry();
@@ -36,23 +49,83 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	}
 
 	@Override
-	public  SimpleElementBase visitFunctioncall(SimpleParser.FunctioncallContext ctx){
+	public SimpleElementBase visitFunctioncall(SimpleParser.FunctioncallContext ctx){
+        String id = ctx.ID().getText();
 
-		String id = ctx.ID().getText();
+        LinkedList<String> params = new LinkedList<>();
+        LinkedList<String> typeList = new LinkedList<>();
+        if(insideDeclaration < 0) {
+            for (SimpleParser.ExpContext exp : ctx.exp()) {
+                if (exp.left.left.left.ID() != null && exp.op == null && exp.left.op == null && exp.left.left.op == null) {
+                    params.add(exp.left.left.left.ID().getText());
+                    typeList.add(simpleVTable.getVarType(exp.left.left.left.ID().getText()));
+                } else {
+                    params.add(null);
+                    typeList.add(null);
+                }
+            }
+            simpleFTable.useFunction(id, params, typeList, simpleVTable);
 
-		LinkedList<String> idList = new LinkedList<>();
-		LinkedList<String> typeList = new LinkedList<>();
+        }
 
-		for (SimpleParser.ExpContext exp : ctx.exp()){
-			typeList.add(visitExp(exp).getType());
-			if (exp.left.left.left.ID() != null && exp.op == null && exp.left.op == null && exp.left.left.op == null){
-				idList.add(exp.left.left.left.ID().getText());
-			} else {
-				idList.add(null);
-			}
-		}
 
-		simpleFTable.useFunction(id, idList, typeList, simpleVTable);
+        if(insideDeclaration == 0) {
+
+            for (SimpleParser.ExpContext exp : ctx.exp()) {
+                if (exp.left.left.left.ID() != null && exp.op == null && exp.left.op == null && exp.left.left.op == null) {
+                    params.add(exp.left.left.left.ID().getText());
+                } else {
+                    params.add(null);
+                }
+            }
+
+            System.out.println("function called -> "+ id + "\n insidedeclaration: "+ insideDeclaration+"\n");
+            insidecall--;
+
+
+            //to avoid typing recursion
+            if (identifier != id) {
+                //to change eventually formal parameters with actual
+                if (identifier != null) {
+                    for (int j = 0; j < params.size(); j++) {
+                        for (int i = 0; i < functionCallStack.size(); i++) {
+                            List<String> actualsParamsPrevFunction = functionCallStack.getActualParamsNthFunction(i);
+                            List<String> formalParamsPrevFunction = simpleFTable.getFunctionFormalParams(functionCallStack.getIdentifierNthFunction(i));
+
+
+                            if (formalParamsPrevFunction.indexOf(params.get(j)) != -1) {
+                                params.set(j, actualsParamsPrevFunction.get(i));
+                            }
+                        }
+                    }
+                }
+
+                //System.out.println("ID funzione: " + id + "\nparametri: " + params +"\ntypelist: " +typeList + "\n");
+
+
+                functionCallStack.functionCall(id, params);
+
+                SimpleFTable tmpSimpleFTable = new SimpleFTable(simpleFTable);
+                SimpleVTable tmpSimpleVTable = new SimpleVTable(simpleVTable);
+
+                identifier = id;
+                FunctionInfo functionInfo = null;
+
+                FunctionInfo functionEnv = functionsInfo.getFunctionInfo(id);
+
+                simpleVTable = functionEnv.getSimpleVTable();
+                simpleFTable = functionEnv.getSimpleFTable();
+                visitBlock(functionEnv.getBlock());
+
+                identifier = null;
+                simpleFTable = tmpSimpleFTable;
+                simpleVTable = tmpSimpleVTable;
+            }
+        }
+        if(insideDeclaration == 0){
+            functionCallStack.functionExit();
+            insidecall++;
+        }
 
 		return new SimpleStmtFunctioncall(id);
 	}
@@ -69,43 +142,66 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 			hasScopeBeenAlreadyDeclared = false;
 		}
 		simpleFTable.scopeEntry();
-
-
-		System.out.println("SimpleVTable " + simpleVTable.identifiersList);
+		functionsInfo.scopeEntry();
 
 		//visit each children
-		for (SimpleParser.StatementContext stmtCtx : ctx.statement())
-			children.add((SimpleStmt) visitStatement(stmtCtx));
+		for (SimpleParser.StatementContext stmtCtx : ctx.statement()){
+            children.add((SimpleStmt) visitStatement(stmtCtx));
+        }
 
 		//construct block statement expression
 		SimpleStmtBlock block = new SimpleStmtBlock(children);
 
 		simpleVTable.scopeExit();
 		simpleFTable.scopeExit();
-		System.out.println("SimpleVTable " +simpleVTable.identifiersList);
-
 		return block;
 	}
 
+	public SimpleElementBase visitIfthenelse(SimpleParser.IfthenelseContext ctx){
+		String type;
+
+		if (ctx.exp() != null){
+			type = visitExp(ctx.exp()).getType();
+			if (!type.equals("bool")){
+				System.out.println("Condizione dell'if non conforme");
+			}
+		}
+
+		return new SimpleStmtIfthenelse();
+	}
+
 	public SimpleElementBase visitDeclaration(SimpleParser.DeclarationContext ctx) {
-		if (ctx.type() == null){
-			String id = ctx.ID().getText();
+        System.out.println(ctx.getText());
+		//if the type is null we have discovered a function declaration
+		if (ctx.type() == null) {
+            if (insidecall == 0){
+                System.out.println("visitFunction declaration");
 
-			List<SimpleParser.ParameterContext> paramList = ctx.parameter();
-			if(paramList.size() > 0) hasScopeBeenAlreadyDeclared = true;
-			simpleFTable.newFunctionDeclaration(id, paramList, simpleVTable, hasScopeBeenAlreadyDeclared);
+            insideDeclaration--;
+            String id = ctx.ID().getText();
 
-			//Visit fun block
-			SimpleStmtBlock block = (SimpleStmtBlock) visit(ctx.block());
+            List<SimpleParser.ParameterContext> paramList = ctx.parameter();
+            if (paramList.size() > 0) hasScopeBeenAlreadyDeclared = true;
+            simpleFTable.newFunctionDeclaration(id, paramList, simpleVTable, hasScopeBeenAlreadyDeclared);
 
-			return new SimpleStmtDeclaration(id);
+            SimpleFTable copyFTable = new SimpleFTable(simpleFTable);
+            SimpleVTable copyVTable = new SimpleVTable(simpleVTable);
+            functionsInfo.functionCall(id, copyFTable, copyVTable, ctx.block());
 
+            System.out.println(functionsInfo.getFunctionInfo(id));
+            //Visit fun block
+            SimpleStmtBlock block = (SimpleStmtBlock) visit(ctx.block());
+            insideDeclaration++;
+
+            return new SimpleStmtDeclaration(id);
+            }
+            return null;
 		} else {
-			String type = ctx.type().getText();
+            String type = ctx.type().getText();
 
-			String id = ctx.ID().getText();
+            String id = ctx.ID().getText();
 
-			String value = ctx.exp().getText();
+            String value = ctx.exp().getText();
 
 			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
 
@@ -203,6 +299,9 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	@Override
 	public SimpleElementBase visitDeletion(SimpleParser.DeletionContext ctx) {
 
+
+
+
 		//construct delete expression with variable id
 		if (simpleVTable.getVarType(ctx.ID().getText()).equals("err") && !simpleFTable.isFunDeclared(ctx.ID().getText())){
 			System.out.println("Delete su ID " + ctx.ID().getText() + " non dichiarato");
@@ -218,8 +317,14 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		//get expression
 		SimpleExp exp = (SimpleExp) visit(ctx.exp());
 
-		//construct print exp
+		//construct delete expression with variable id
+		if (ctx.exp().left.left.left.ID() != null){
+			if (simpleVTable.getVarType(ctx.exp().left.left.left.ID().getText()).equals("err")){
+				System.out.println("Print su ID " + ctx.exp().left.left.left.ID().getText() + " non dichiarato");
+			}
+		}
 
+		//construct print exp
 		return new SimpleStmtPrint(exp);
 	}
 }

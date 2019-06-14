@@ -12,6 +12,10 @@ import java.util.List;
 public class SimpleVTable {
     public List<HashMap> identifiersList = new LinkedList<HashMap>();
 
+    public SimpleVTable() {}
+
+    public SimpleVTable(SimpleVTable copyInstance) { this.identifiersList = copyInstance.identifiersList; }
+
     public void scopeEntry(){
         identifiersList.add(new HashMap());
     }

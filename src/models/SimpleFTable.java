@@ -8,7 +8,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SimpleFTable {
+    //Boolean is on if the parameter is passed by var
     public List<HashMap<String, List<Tuple<Boolean, String, String>>>> fTable = new LinkedList<>();
+
+    public SimpleFTable() {}
+
+    public SimpleFTable(SimpleFTable copyInstance){ this.fTable = copyInstance.fTable; }
 
     public void scopeEntry(){
         fTable.add(new HashMap<>());
@@ -46,17 +51,45 @@ public class SimpleFTable {
                 for (String actualParamId : actualParamIdList){
                     if (formalParamList.get(paramIndex).var){
                         if (actualParamIdList.get(paramIndex) != null && !simpleVTable.isVarDeclared(actualParamId)){
-                            System.out.println("Parametro attuale non può essere passato per riferimento.");
+                            System.out.println("Parametro attuale " + actualParamId + " non può essere passato per riferimento.");
                         }
                     }
 
                     if (!formalParamList.get(paramIndex).type.equals(actualParamTypeList.get(paramIndex))){
-                        System.out.println("Tipo del parametro attuale non conforme");
+                        System.out.println("Tipo del parametro attuale " + actualParamId + " non conforme");
                     }
                     paramIndex++;
                 }
             }
         }
+    }
+
+    public boolean isNthParamVar(String identifier, int index){
+        for (HashMap hashTable : fTable){
+            if(hashTable.get(identifier) != null){
+               List params = (List) hashTable.get(identifier);
+               Tuple param = (Tuple) params.get(index);
+               return (boolean) param.var;
+            }
+        }
+        return false;
+    }
+
+    public  List<String> getFunctionFormalParams(String identifier){
+        List<String> formalParamsPassedByVar = new LinkedList<>();
+        for (HashMap hashTable : fTable){
+            if(hashTable.get(identifier) != null){
+                for (Tuple<Boolean, String, String> param: (List<Tuple<Boolean, String, String>>) hashTable.get(identifier)) {
+                    if(param.var){
+                        formalParamsPassedByVar.add(param.value);
+                    } else {
+                        formalParamsPassedByVar.add("");
+                    }
+                }
+                return formalParamsPassedByVar;
+            }
+        }
+        return formalParamsPassedByVar;
     }
 
     public int getFunIndex(String identifier){

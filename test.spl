@@ -1,25 +1,24 @@
 {
-    f(int x, var int y){
-        int p = 4;
-        x = 2;
 
-        foo() {
+    q(var int v){
 
-
-            g(){ int y = 3;}
-
-            g();
-        }
-
-        foo();
-        delete foo();
     }
 
-    int x = 2;
+    f(var int x){
+         int h = 3;
 
-    delete x;
+     g(var int z, var int m){
 
-    f(2, x)
+          q(z);
 
-    delete f;
+      }
+
+      g(x, h);
+
+    }
+
+    int y = 2;
+
+    f(y);
+
 }

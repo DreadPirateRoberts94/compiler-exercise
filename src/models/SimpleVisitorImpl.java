@@ -302,7 +302,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 
         System.out.println(insideDeclaration);
-        System.out.println("delete: "+ctx.ID().getText());
 
         if(insideDeclaration == 0){
 
@@ -314,11 +313,15 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
                 List<String> actualParams = functionCallStack.getActualParamsNthFunction(i);
                 List<String> formalParams = simpleFTable.getFunctionFormalParams(functionCallStack.getIdentifierNthFunction(i));
 
+                System.out.println("Function: "+ functionCallStack.getIdentifierNthFunction(i)+" parametri attuali "+ actualParams +" parametri formali " + formalParams);
+
+
+
                 for (String formalParam: formalParams) {
                     if(id.equals(formalParam)){
                         String actualParam = actualParams.get(formalParam.indexOf(formalParam));
                         simpleVTable.deleteIdentifier(actualParam);
-                        break;
+                        return new SimpleStmtDelete(ctx.ID().getText());
                     }
                 }
 

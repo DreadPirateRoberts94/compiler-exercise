@@ -1,8 +1,6 @@
 package models;
 
-import javafx.util.Pair;
 import models.Utilities.FunctionInfo;
-import models.Utilities.Tuple;
 import parser.*;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,7 +10,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	private SimpleVTable simpleVTable = new SimpleVTable();
 	private SimpleFTable simpleFTable = new SimpleFTable();
 
-	private SimpleFInvocationTable functionsInfo = new SimpleFInvocationTable();
+	private SimpleFInvocation functionsInfo = new SimpleFInvocation();
 
 	private FunctionCallStack functionCallStack = new FunctionCallStack();
 
@@ -68,7 +66,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
         }
 
-
+        //no inside declaration
         if(insideDeclaration == 0) {
 
             for (SimpleParser.ExpContext exp : ctx.exp()) {
@@ -79,7 +77,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
                 }
             }
 
-            System.out.println("function called -> "+ id + "\n insidedeclaration: "+ insideDeclaration+"\n");
             insidecall--;
 
 
@@ -88,17 +85,20 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
                 //to change eventually formal parameters with actual
                 if (identifier != null) {
                     for (int j = 0; j < params.size(); j++) {
-                        for (int i = 0; i < functionCallStack.size(); i++) {
+                        for (int i = functionCallStack.size()-1; i >= 0 ; i--) {
                             List<String> actualsParamsPrevFunction = functionCallStack.getActualParamsNthFunction(i);
                             List<String> formalParamsPrevFunction = simpleFTable.getFunctionFormalParams(functionCallStack.getIdentifierNthFunction(i));
+                            System.out.println("formal params: " + formalParamsPrevFunction + " fun id: " +  functionCallStack.getIdentifierNthFunction(i));
 
 
                             if (formalParamsPrevFunction.indexOf(params.get(j)) != -1) {
                                 params.set(j, actualsParamsPrevFunction.get(i));
+                                break;
                             }
                         }
                     }
                 }
+                System.out.println("function called -> "+ id +" with params " +params +"\n insidedeclaration: "+ insideDeclaration+"\n");
 
                 //System.out.println("ID funzione: " + id + "\nparametri: " + params +"\ntypelist: " +typeList + "\n");
 
@@ -142,7 +142,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 			hasScopeBeenAlreadyDeclared = false;
 		}
 		simpleFTable.scopeEntry();
-		functionsInfo.scopeEntry();
 
 		//visit each children
 		for (SimpleParser.StatementContext stmtCtx : ctx.statement()){
@@ -174,7 +173,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
         System.out.println(ctx.getText());
 		//if the type is null we have discovered a function declaration
 		if (ctx.type() == null) {
-            if (insidecall == 0){
+
                 System.out.println("visitFunction declaration");
 
             insideDeclaration--;
@@ -191,11 +190,12 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
             System.out.println(functionsInfo.getFunctionInfo(id));
             //Visit fun block
             SimpleStmtBlock block = (SimpleStmtBlock) visit(ctx.block());
+
+            System.out.println("exit function declaration");
             insideDeclaration++;
 
             return new SimpleStmtDeclaration(id);
-            }
-            return null;
+
 		} else {
             String type = ctx.type().getText();
 
@@ -301,11 +301,35 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 
 
+        System.out.println(insideDeclaration);
+        System.out.println("delete: "+ctx.ID().getText());
 
-		//construct delete expression with variable id
-		if (simpleVTable.getVarType(ctx.ID().getText()).equals("err") && !simpleFTable.isFunDeclared(ctx.ID().getText())){
-			System.out.println("Delete su ID " + ctx.ID().getText() + " non dichiarato");
-		}
+        if(insideDeclaration == 0){
+
+            //construct delete expression with variable id
+
+			            String id = ctx.ID().getText();
+
+            for(int i = functionCallStack.size()-1; i >= 0; i--){
+                List<String> actualParams = functionCallStack.getActualParamsNthFunction(i);
+                List<String> formalParams = simpleFTable.getFunctionFormalParams(functionCallStack.getIdentifierNthFunction(i));
+
+                for (String formalParam: formalParams) {
+                    if(id.equals(formalParam)){
+                        String actualParam = actualParams.get(formalParam.indexOf(formalParam));
+                        simpleVTable.deleteIdentifier(actualParam);
+                        break;
+                    }
+                }
+
+            }
+
+            if (simpleVTable.getVarType(ctx.ID().getText()).equals("err")){
+                System.out.println("Delete su ID " + ctx.ID().getText() + " non dichiarato");
+            } else {
+                simpleVTable.deleteIdentifier(ctx.ID().getText());
+            }
+        }
 
 		return new SimpleStmtDelete(ctx.ID().getText());
 	}

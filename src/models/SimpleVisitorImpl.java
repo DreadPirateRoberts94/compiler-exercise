@@ -191,14 +191,16 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 			visitBlock(thenBlock);
 
+			System.out.println("IF: " + ifSimpleVTable.isVarDeclared("x"));
+			System.out.println("THEN: " + thenSimpleVTable.isVarDeclared("x"));
+
+
 			thenSimpleVTable = new SimpleVTable(simpleVTable);
 
 			simpleVTable = new SimpleVTable(tmpSimpleVTable);
 
 			System.out.println("Checking if then else.");
-			if(ifSimpleVTable.equals(thenSimpleVTable)){
-
-			} else {
+			if(!ifSimpleVTable.equals(thenSimpleVTable) || !thenSimpleVTable.equals(ifSimpleVTable)){
 				System.out.println("if then else non bilanciato");
 			}
 		}
@@ -218,6 +220,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 			List<SimpleParser.ParameterContext> paramList = ctx.parameter();
 			if (paramList.size() > 0) hasScopeBeenAlreadyDeclared = true;
+
 			simpleFTable.newFunctionDeclaration(id, paramList, simpleVTable, hasScopeBeenAlreadyDeclared);
 
 			functionsInfo.functionCall(id, ctx.block());

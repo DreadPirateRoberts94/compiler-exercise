@@ -25,6 +25,8 @@ public class SimpleVTable {
     public SimpleVTable(SimpleVTable copyInstance) {
         for (HashMap hashmap: copyInstance.identifiersList) {
             this.identifiersList.add(new HashMap(hashmap));
+        }
+        for (HashMap hashmap: copyInstance.identifierAndAddress) {
             this.identifierAndAddress.add(new HashMap(hashmap));
         }
     }
@@ -42,18 +44,30 @@ public class SimpleVTable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
+
         SimpleVTable otherTable = (SimpleVTable) o;
-        return identifiersList.equals(otherTable.identifiersList);
+
+        for (int i = 0; i < identifiersList.size(); i++){
+            Map<String, String> map = identifiersList.get(i);
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                String id = entry.getKey();
+                String type = entry.getValue();
+                if (otherTable.getVarType(id).equals("err") || !otherTable.getVarType(id).equals(type)){
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
 
 
     public Boolean deleteIdentifier(String identifier){
         int addressToDelete = -1;
-        System.out.println("identifier to delete: "+identifier);
+        System.out.println("identifier to delete: " + identifier);
         for(int i = identifiersList.size()-1; i >= 0; i--){
             if( identifiersList.get(i).get(identifier) != null){
-                System.out.println(identifierAndAddress.get(i).get(identifier));
+                System.out.println(identifierAndAddress.get(i));
                 addressToDelete = (int) identifierAndAddress.get(i).get(identifier);
                 break;
             }

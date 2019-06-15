@@ -1,13 +1,17 @@
 {
-   f(var int x, var int y){
+   f(var int x, var int y, int q, int h){
         int z = x ;
+         x = q;
+         x = h;
+         int m = 2;
         delete x ;
         y = y+z ;
     }
 
     {
-        int x = 3 ;
-        f(x,x) ;
+        int m = 3 ;
+        f(m,m,m,m) ;
+        delete m;
     }
 
 }

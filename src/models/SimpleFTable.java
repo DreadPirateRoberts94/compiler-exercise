@@ -1,5 +1,6 @@
 package models;
 
+import javafx.util.Pair;
 import models.Utilities.Tuple;
 import parser.SimpleParser;
 
@@ -37,21 +38,6 @@ public class SimpleFTable {
         }
     }
 
-    public List<String> getFunctionVarParam(String identifier){
-        List<String> identifiers = new LinkedList<String>();
-
-        for(HashMap block : fTable){
-            if(block.get(identifier) != null){
-                List<Tuple<Boolean, String, String>> hashMap = (List<Tuple<Boolean, String, String>>) block.get(identifier);
-                for(Tuple<Boolean, String, String> param : hashMap){
-                    if(param.var){
-                        identifiers.add(param.value);
-                    }
-                }
-            }
-        }
-        return identifiers;
-    }
 
     public void useFunction(String identifier, LinkedList<String> actualParamIdList, LinkedList<String> actualParamTypeList, SimpleVTable simpleVTable){
         if (!isFunDeclared(identifier)){
@@ -91,7 +77,7 @@ public class SimpleFTable {
         return false;
     }
 
-    public  List<String> getFunctionFormalParams(String identifier){
+    public  List<String> getFunctionFormalVarParams(String identifier){
         List<String> formalParamsPassedByVar = new LinkedList<>();
         for (HashMap hashTable : fTable){
             if(hashTable.get(identifier) != null){
@@ -106,6 +92,19 @@ public class SimpleFTable {
             }
         }
         return formalParamsPassedByVar;
+    }
+
+    public List<Pair> getFunctionFormalParamsAndType(String identifier){
+        List<Pair> formalParams = new LinkedList<>();
+        for (HashMap hashTable : fTable){
+            if(hashTable.get(identifier) != null){
+                for (Tuple<Boolean, String, String> param: (List<Tuple<Boolean, String, String>>) hashTable.get(identifier)) {
+                    formalParams.add(new Pair(param.value, param.type));
+                }
+                return formalParams;
+            }
+        }
+        return formalParams;
     }
 
     public int getFunIndex(String identifier){

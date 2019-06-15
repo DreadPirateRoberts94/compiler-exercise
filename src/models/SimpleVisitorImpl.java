@@ -106,21 +106,21 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
                 functionCallStack.functionCall(id, params);
 
-                SimpleFTable tmpSimpleFTable = new SimpleFTable(simpleFTable);
-                SimpleVTable tmpSimpleVTable = new SimpleVTable(simpleVTable);
+                //SimpleFTable tmpSimpleFTable = new SimpleFTable(simpleFTable);
+                //SimpleVTable tmpSimpleVTable = new SimpleVTable(simpleVTable);
 
                 identifier = id;
                 FunctionInfo functionInfo = null;
 
                 FunctionInfo functionEnv = functionsInfo.getFunctionInfo(id);
 
-                simpleVTable = functionEnv.getSimpleVTable();
-                simpleFTable = functionEnv.getSimpleFTable();
+                //simpleVTable = functionEnv.getSimpleVTable();
+                //simpleFTable = functionEnv.getSimpleFTable();
                 visitBlock(functionEnv.getBlock());
 
                 identifier = null;
-                simpleFTable = tmpSimpleFTable;
-                simpleVTable = tmpSimpleVTable;
+                //simpleFTable = tmpSimpleFTable;
+                //simpleVTable = tmpSimpleVTable;
             }
         }
         if(insideDeclaration == 0){
@@ -166,6 +166,49 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 				System.out.println("Condizione dell'if non conforme");
 			}
 		}
+
+		SimpleParser.BlockContext ifBlock = ctx.block(0); //if block
+		SimpleParser.BlockContext thenBlock = ctx.block(1); //then block
+
+		if(ifBlock != null && thenBlock != null){
+
+
+		SimpleVTable ifSimpleVTable = new SimpleVTable(simpleVTable);
+		SimpleFTable ifSimpleFTable = new SimpleFTable(simpleFTable);
+
+		SimpleVTable thenSimpleVTable = new SimpleVTable(simpleVTable);
+		SimpleFTable thenSimpleFTable = new SimpleFTable(simpleFTable);
+
+		SimpleFTable tmpSimpleFTable = new SimpleFTable(simpleFTable);
+		SimpleVTable tmpSimpleVTable = new SimpleVTable(simpleVTable);
+
+		simpleVTable = new SimpleVTable(ifSimpleVTable);
+		simpleFTable = new SimpleFTable(ifSimpleFTable);
+
+		visitBlock(ifBlock);
+
+		ifSimpleVTable = new SimpleVTable(simpleVTable);
+		ifSimpleFTable = new SimpleFTable(simpleFTable);
+
+		simpleVTable = new SimpleVTable(thenSimpleVTable);
+		simpleFTable = new SimpleFTable(thenSimpleFTable);
+
+		visitBlock(thenBlock);
+
+		thenSimpleFTable = new SimpleFTable(simpleFTable);
+		thenSimpleVTable = new SimpleVTable(simpleVTable);
+
+		simpleFTable = new SimpleFTable(tmpSimpleFTable);
+		simpleVTable = new SimpleVTable(tmpSimpleVTable);
+
+		System.out.println("Checking if then else.");
+		if(ifSimpleVTable.equals(thenSimpleVTable)){
+
+		} else {
+			System.out.println("if then else non bilanciato");
+			}
+		}
+
 
 		return new SimpleStmtIfthenelse();
 	}
@@ -303,7 +346,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
         System.out.println("Deleting...");
 
-        if(insideDeclaration == 0){
 
             //construct delete expression with variable id
 			String id = ctx.ID().getText();
@@ -332,7 +374,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
             } else {
                 simpleVTable.deleteIdentifier(ctx.ID().getText());
             }
-        }
 
 		return new SimpleStmtDelete(ctx.ID().getText());
 	}

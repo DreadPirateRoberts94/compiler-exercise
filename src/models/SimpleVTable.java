@@ -14,11 +14,29 @@ public class SimpleVTable {
 
     public SimpleVTable() {}
 
-    public SimpleVTable(SimpleVTable copyInstance) { this.identifiersList = copyInstance.identifiersList; }
+    public SimpleVTable(SimpleVTable copyInstance) {
+        for (HashMap hashmap: copyInstance.identifiersList) {
+            this.identifiersList.add(new HashMap(hashmap));
+        }
+    }
 
     public void scopeEntry(){
         identifiersList.add(new HashMap());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        SimpleVTable otherTable = (SimpleVTable) o;
+        return identifiersList.equals(otherTable.identifiersList);
+    }
+
+
 
     public Boolean deleteIdentifier(String identifier){
         int identifierToDelete = -1;

@@ -1,7 +1,14 @@
 {
+    f(var int x, int y){
+        if (y == 0) then {
+         delete x;
+        }
+        else{
+          x=x+y ;
+        }
+    }
 
     q(var int v){
-        delete v;
         delete v;
     }
 
@@ -11,6 +18,7 @@
      g(var int z, var int m){
 
           q(z);
+
       }
 
       g(x, h);

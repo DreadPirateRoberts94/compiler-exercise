@@ -16,9 +16,9 @@ public class SimpleVTable {
 
     private int getUniqueIdentifier() { return uniqueIdentifier++; }
 
-    public List<HashMap> identifiersList = new LinkedList<HashMap>();
+    private List<HashMap> identifiersList = new LinkedList<HashMap>();
 
-    public List<HashMap> identifierAndAddress = new LinkedList<HashMap>();
+    private List<HashMap> identifierAndAddress = new LinkedList<HashMap>();
 
     public SimpleVTable() {}
 
@@ -47,12 +47,11 @@ public class SimpleVTable {
 
         SimpleVTable otherTable = (SimpleVTable) o;
 
-        for (int i = 0; i < identifiersList.size(); i++){
-            Map<String, String> map = identifiersList.get(i);
+        for (Map<String, String> map : identifiersList) {
             for (Map.Entry<String, String> entry : map.entrySet()) {
                 String id = entry.getKey();
                 String type = entry.getValue();
-                if (otherTable.getVarType(id).equals("err") || !otherTable.getVarType(id).equals(type)){
+                if (otherTable.getVarType(id).equals("err") || !otherTable.getVarType(id).equals(type)) {
                     return false;
                 }
             }

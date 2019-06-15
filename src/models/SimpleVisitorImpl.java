@@ -3,7 +3,6 @@ package models;
 import javafx.util.Pair;
 import parser.*;
 
-import javax.swing.*;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,6 +50,8 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		LinkedList<String> params = new LinkedList<>();
 		LinkedList<String> typeList = new LinkedList<>();
+
+		//Check type if insideDeclaration
 		if(insideDeclaration < 0) {
 			for (SimpleParser.ExpContext exp : ctx.exp()) {
 				if (exp.left.left.left.ID() != null && exp.op == null && exp.left.op == null && exp.left.left.op == null) {
@@ -63,7 +64,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 			}
 			simpleFTable.useFunction(id, params, typeList, simpleVTable);
 
-		} else {
+		} else { //Skip typeCheck
 			for (SimpleParser.ExpContext exp : ctx.exp()) {
 				if (exp.left.left.left.ID() != null && exp.op == null && exp.left.op == null && exp.left.left.op == null) {
 					params.add(exp.left.left.left.ID().getText());
@@ -73,15 +74,12 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 			}
 		}
 
-		//no inside declaration
-
 		//to avoid typing recursion
-		if (identifier != id) {
+		if (!identifier.equals(id)) {
 
 			functionCallStack.functionCall(id, params);
 
 			identifier = id;
-			SimpleParser.BlockContext functionBlock = null;
 			simpleVTable.scopeEntry();
 
 			for (Pair param: simpleFTable.getFunctionFormalParamsAndType(id)) {
@@ -111,7 +109,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 	public SimpleElementBase visitBlock(SimpleParser.BlockContext ctx) {
 
 		//list for saving children statements
-		List<SimpleStmt> children = new LinkedList<SimpleStmt>();
+		List<SimpleStmt> children = new LinkedList<>();
 		//A new HashMap will be created on the tail of the HashTable List
 		if(!hasScopeBeenAlreadyDeclared){
 			simpleVTable.scopeEntry();
@@ -191,7 +189,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 			functionsInfo.functionCall(id, ctx.block());
 
 			//Visit fun block
-			SimpleStmtBlock block = (SimpleStmtBlock) visit(ctx.block());
+			visit(ctx.block());
 
 			insideDeclaration++;
 
@@ -204,7 +202,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 			String value = ctx.exp().getText();
 
-			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
+			SimpleStmtExp exp = visitExp(ctx.exp());
 
 			if(!type.equals(exp.getType())){
 				System.out.println("Tipo della dichiarazione di " + id + " non compatibile con quello dell'espressione ");
@@ -218,14 +216,14 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 	@Override
 	public SimpleStmtExp visitExp(SimpleParser.ExpContext ctx){
-		String leftType = "";
-		String rightType = "";
+		String leftType;
+		String rightType;
 
 		if(ctx.op == null){
 			return new SimpleStmtExp(visitTerm(ctx.left).getType());
 		} else if(ctx.op.getText().equals("+") || ctx.op.getText().equals("-")){
 			leftType = visitTerm(ctx.left).getType();
-			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.right);
+			SimpleStmtExp exp = visitExp(ctx.right);
 			rightType = exp.getType();
 			return  new SimpleStmtExp(leftType.equals(rightType) ? "int" : "err");
 		} else {
@@ -237,8 +235,8 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 	@Override
 	public SimpleStmtExp visitTerm(SimpleParser.TermContext ctx){
-		String leftType = "";
-		String rightType = "";
+		String leftType;
+		String rightType;
 
 		if(ctx.op == null){
 			return new SimpleStmtExp(visitFactor(ctx.left).getType());
@@ -257,8 +255,8 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 	@Override
 	public SimpleStmtExp visitFactor(SimpleParser.FactorContext ctx){
-		String leftType = "";
-		String rightType = "";
+		String leftType;
+		String rightType;
 
 		if(ctx.ROP() == null && ctx.op == null){
 			return  new SimpleStmtExp(visitValue(ctx.left).getType());
@@ -279,14 +277,14 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 	@Override
 	public SimpleStmtExp visitValue(SimpleParser.ValueContext ctx){
-		String type = "";
+		String type;
 
 		if(ctx.INTEGER() != null){
 			type = "int";
 		} else if (ctx.getText().equals("true") || ctx.getText().equals("false")){
 			type = "bool";
 		} else if (ctx.exp() != null){
-			SimpleStmtExp exp = (SimpleStmtExp) visitExp(ctx.exp());
+			SimpleStmtExp exp = visitExp(ctx.exp());
 			type = exp.getType();
 		} else if (ctx.ID() != null){
 			if(simpleVTable.isVarDeclared(ctx.ID().getText())) {
@@ -304,9 +302,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 	@Override
 	public SimpleElementBase visitDeletion(SimpleParser.DeletionContext ctx) {
-
-		//construct delete expression with variable id
-		String id = ctx.ID().getText();
 
 		if (simpleVTable.getVarType(ctx.ID().getText()).equals("err")){
 			System.out.println("Delete su ID " + ctx.ID().getText() + " non dichiarato");

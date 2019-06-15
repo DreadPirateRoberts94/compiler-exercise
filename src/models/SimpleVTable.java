@@ -50,14 +50,15 @@ public class SimpleVTable {
 
     public Boolean deleteIdentifier(String identifier){
         int addressToDelete = -1;
-
+        System.out.println("identifier to delete: "+identifier);
         for(int i = identifiersList.size()-1; i >= 0; i--){
             if( identifiersList.get(i).get(identifier) != null){
+                System.out.println(identifierAndAddress.get(i).get(identifier));
                 addressToDelete = (int) identifierAndAddress.get(i).get(identifier);
                 break;
             }
         }
-
+        int index = 0;
         if(addressToDelete != -1){
 
             for (HashMap paramToDelete: identifierAndAddress) {
@@ -67,11 +68,13 @@ public class SimpleVTable {
                     String id = entry.getKey();
                     int address = entry.getValue();
                     if(address == addressToDelete){
-
+                        System.out.println("Delete: "+ addressToDelete);
                         paramToDelete.remove(id);
+                        identifiersList.get(index).remove(id);
                     }
                     System.out.println("ID: "+id+" Address: "+address);
                 }
+                index++;
             }
             return true;
         }

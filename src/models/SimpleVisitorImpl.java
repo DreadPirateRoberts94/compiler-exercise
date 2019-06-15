@@ -41,7 +41,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		//get id of variable
 		String id = ctx.ID().getText();
-		visitExp(ctx.exp());
 		simpleVTable.isVarDeclared(id);
 
 		//construct assignment expression
@@ -345,7 +344,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		//construct delete expression with variable id
 		String id = ctx.ID().getText();
 
-		for(int i = functionCallStack.size()-1; i >= 0; i--){
+		/*for(int i = functionCallStack.size()-1; i >= 0; i--){
 			List<String> actualParams = functionCallStack.getActualParamsNthFunction(i);
 			List<String> formalParams = simpleFTable.getFunctionFormalVarParams(functionCallStack.getIdentifierNthFunction(i));
 
@@ -362,7 +361,7 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 					return new SimpleStmtDelete(ctx.ID().getText());
 				}
 			}
-		}
+		}*/
 
 		if (simpleVTable.getVarType(ctx.ID().getText()).equals("err")){
 			System.out.println("Delete su ID " + ctx.ID().getText() + " non dichiarato");

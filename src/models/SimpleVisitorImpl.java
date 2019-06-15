@@ -1,6 +1,5 @@
 package models;
 
-import models.Utilities.FunctionInfo;
 import parser.*;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,18 +63,19 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
             }
             simpleFTable.useFunction(id, params, typeList, simpleVTable);
 
-        }
+        } else {
+			for (SimpleParser.ExpContext exp : ctx.exp()) {
+				if (exp.left.left.left.ID() != null && exp.op == null && exp.left.op == null && exp.left.left.op == null) {
+					params.add(exp.left.left.left.ID().getText());
+				} else {
+					params.add(null);
+				}
+			}
+		}
 
         //no inside declaration
-        if(insideDeclaration == 0) {
 
-            for (SimpleParser.ExpContext exp : ctx.exp()) {
-                if (exp.left.left.left.ID() != null && exp.op == null && exp.left.op == null && exp.left.left.op == null) {
-                    params.add(exp.left.left.left.ID().getText());
-                } else {
-                    params.add(null);
-                }
-            }
+
 
             insidecall--;
 
@@ -83,7 +83,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
             //to avoid typing recursion
             if (identifier != id) {
                 //to change eventually formal parameters with actual
-                if (identifier != null) {
                     for (int j = 0; j < params.size(); j++) {
                         for (int i = functionCallStack.size()-1; i >= 0 ; i--) {
                             List<String> actualsParamsPrevFunction = functionCallStack.getActualParamsNthFunction(i);
@@ -93,40 +92,27 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
                             String tmp = params.get(j);
 
                             if (formalParamsPrevFunction.indexOf(tmp) != -1) {
-                                params.set(j, actualsParamsPrevFunction.get(j));
+                                params.set(j, actualsParamsPrevFunction.get(i));
                                 break;
                             }
                         }
-                    }
                 }
                 System.out.println("function called -> "+ id +" with params " + params +"\n insidedeclaration: "+ insideDeclaration+"\n");
 
                 //System.out.println("ID funzione: " + id + "\nparametri: " + params +"\ntypelist: " +typeList + "\n");
 
-
                 functionCallStack.functionCall(id, params);
 
-                //SimpleFTable tmpSimpleFTable = new SimpleFTable(simpleFTable);
-                //SimpleVTable tmpSimpleVTable = new SimpleVTable(simpleVTable);
-
                 identifier = id;
-                FunctionInfo functionInfo = null;
+                SimpleParser.BlockContext functionBlock = null;
 
-                FunctionInfo functionEnv = functionsInfo.getFunctionInfo(id);
 
-                //simpleVTable = functionEnv.getSimpleVTable();
-                //simpleFTable = functionEnv.getSimpleFTable();
-                visitBlock(functionEnv.getBlock());
+                visitBlock(functionsInfo.getFunctionBlock(id));
 
                 identifier = null;
-                //simpleFTable = tmpSimpleFTable;
-                //simpleVTable = tmpSimpleVTable;
             }
-        }
-        if(insideDeclaration == 0){
             functionCallStack.functionExit();
             insidecall++;
-        }
 
 		return new SimpleStmtFunctioncall(id);
 	}
@@ -172,33 +158,24 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
 		if(ifBlock != null && thenBlock != null){
 
-
 		SimpleVTable ifSimpleVTable = new SimpleVTable(simpleVTable);
-		SimpleFTable ifSimpleFTable = new SimpleFTable(simpleFTable);
 
 		SimpleVTable thenSimpleVTable = new SimpleVTable(simpleVTable);
-		SimpleFTable thenSimpleFTable = new SimpleFTable(simpleFTable);
 
-		SimpleFTable tmpSimpleFTable = new SimpleFTable(simpleFTable);
 		SimpleVTable tmpSimpleVTable = new SimpleVTable(simpleVTable);
 
 		simpleVTable = new SimpleVTable(ifSimpleVTable);
-		simpleFTable = new SimpleFTable(ifSimpleFTable);
 
 		visitBlock(ifBlock);
 
 		ifSimpleVTable = new SimpleVTable(simpleVTable);
-		ifSimpleFTable = new SimpleFTable(simpleFTable);
 
 		simpleVTable = new SimpleVTable(thenSimpleVTable);
-		simpleFTable = new SimpleFTable(thenSimpleFTable);
 
 		visitBlock(thenBlock);
 
-		thenSimpleFTable = new SimpleFTable(simpleFTable);
 		thenSimpleVTable = new SimpleVTable(simpleVTable);
 
-		simpleFTable = new SimpleFTable(tmpSimpleFTable);
 		simpleVTable = new SimpleVTable(tmpSimpleVTable);
 
 		System.out.println("Checking if then else.");
@@ -208,7 +185,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 			System.out.println("if then else non bilanciato");
 			}
 		}
-
 
 		return new SimpleStmtIfthenelse();
 	}
@@ -227,11 +203,8 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
             if (paramList.size() > 0) hasScopeBeenAlreadyDeclared = true;
             simpleFTable.newFunctionDeclaration(id, paramList, simpleVTable, hasScopeBeenAlreadyDeclared);
 
-            SimpleFTable copyFTable = new SimpleFTable(simpleFTable);
-            SimpleVTable copyVTable = new SimpleVTable(simpleVTable);
-            functionsInfo.functionCall(id, copyFTable, copyVTable, ctx.block());
+            functionsInfo.functionCall(id, ctx.block());
 
-            System.out.println(functionsInfo.getFunctionInfo(id));
             //Visit fun block
             SimpleStmtBlock block = (SimpleStmtBlock) visit(ctx.block());
 

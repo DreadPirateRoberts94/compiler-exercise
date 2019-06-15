@@ -1,33 +1,13 @@
 {
-    f(var int x, int y){
-        if (y == 0) then {
-         delete x;
-        }
-        else{
-          x=x+y ;
-        }
+   f(var int x, var int y){
+        int z = x ;
+        delete x ;
+        y = y+z ;
     }
 
-    q(var int v){
-        delete v;
+    {
+        int x = 3 ;
+        f(x,x) ;
     }
 
-    f(var int x){
-         int h = 3;
-
-     g(var int z, var int m){
-
-          q(z);
-
-      }
-
-      g(x, h);
-
-    }
-
-    int y = 2;
-
-    f(y);
-
-    delete y;
 }

@@ -8,8 +8,8 @@ import java.util.List;
 
 public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 
-	private SimpleVTable simpleVTable = new SimpleVTable();
-	private SimpleFTable simpleFTable = new SimpleFTable();
+	public SimpleVTable simpleVTable = new SimpleVTable();
+	public SimpleFTable simpleFTable = new SimpleFTable();
 
 	private SimpleFInvocation functionsInfo = new SimpleFInvocation();
 

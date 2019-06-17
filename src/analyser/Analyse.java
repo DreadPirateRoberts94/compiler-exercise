@@ -39,7 +39,7 @@ public class Analyse {
 			SimpleVisitorImpl visitor = new SimpleVisitorImpl();
 
 			//visit the root, this will recursively visit the whole tree
-			SimpleStmtBlock mainBlock = (SimpleStmtBlock) visitor.visitBlock(parser.block());
+			visitor.visitBlock(parser.block());
 
 
 		} catch (IOException e) {

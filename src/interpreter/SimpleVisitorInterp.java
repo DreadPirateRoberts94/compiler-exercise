@@ -1,6 +1,7 @@
 package interpreter;
 
-import models.*;
+import javafx.util.Pair;
+import org.antlr.v4.runtime.tree.ParseTree;
 import parser.SimpleBaseVisitor;
 import parser.SimpleParser;
 
@@ -9,24 +10,73 @@ import java.util.List;
 
 public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
+
+    SimpleVTableWithOffset simpleVTableWithOffset = new SimpleVTableWithOffset();
+
+    private int nestingLevel = 0;
+
     @Override
     public List<Node> visitStatement(SimpleParser.StatementContext ctx) {
         //visit the first child, this works for every case
         return visit(ctx.getChild(0));
     }
 
+
     @Override
     public List<Node> visitBlock(SimpleParser.BlockContext ctx) {
 
+        simpleVTableWithOffset.scopeEntry();
+        nestingLevel++;
+
+        List<String> variablesDeclared = visitBlockAndGetDeclaration(ctx);
+
+        List<Node> codeBlock = new LinkedList<>();
+
+        for(int i = variablesDeclared.size()-1; i >= 0; i--){
+            codeBlock.add(new Node("addi", "sp", 0, "sp", "-1"));
+        }
+
         //list for saving children statements
-        List<Node> children = new LinkedList<>();
+        List<Node> statementCode = new LinkedList<>();
 
         //visit each children
         for (SimpleParser.StatementContext stmtCtx : ctx.statement()){
-            children.add((Node) visitStatement(stmtCtx));
+            statementCode.addAll(visitStatement(stmtCtx));
         }
 
-        return children;
+        nestingLevel--;
+        simpleVTableWithOffset.scopeExit();
+
+        codeBlock.addAll(statementCode);
+
+        for (Node node: codeBlock) {
+            System.out.println("instr: " + node.getInstr() + " arg1: "+ node.getArg1()+" offset: "+node.getOffset()+" arg2: "+ node.getArg2()+" arg3: " + node.getArg3());
+        }
+        System.out.println("\n\n\n");
+
+
+        return codeBlock;
+    }
+
+
+    public List<String> visitBlockAndGetDeclaration(SimpleParser.BlockContext ctx){
+
+        List<String> variablesDeclared = new LinkedList<>();
+
+        for (SimpleParser.StatementContext stmtCtx : ctx.statement()){
+             //meaning that we have found a declaration
+             if(stmtCtx.getChild(0).getClass() == SimpleParser.DeclarationContext.class ){
+                SimpleParser.DeclarationContext declaration = (SimpleParser.DeclarationContext) stmtCtx.getChild(0);
+                //getting the variable identifier
+                variablesDeclared.add(declaration.ID().getText());
+
+                simpleVTableWithOffset.varDeclaration(declaration.ID().getText());
+                simpleVTableWithOffset.newIdentifierDeclaration(declaration.ID().getText(), "");
+             }
+        }
+
+
+        return variablesDeclared;
     }
 
     @Override
@@ -156,15 +206,54 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
             valueCode.addAll(visitExp(ctx.exp()));
             return valueCode;
         } else if (ctx.ID() != null){
+
             return visitId(ctx.ID().getText());
         }
 
         return valueCode;
     }
 
+
     public List<Node> visitId(String id){
         List<Node> idCode = new LinkedList<>();
+
+        Pair<Integer, Integer> offsetAndNestingLevel =  simpleVTableWithOffset.getOffsetAndNestingLevel(id);
+
+        idCode.add(new Node("lw","al", 0,"fp",null));
+        for(int i = 0; i < nestingLevel - (int) offsetAndNestingLevel.getValue(); i++){
+            idCode.add(new Node("lw","al",0,"al",null));
+        }
+
+        int offset = (int) offsetAndNestingLevel.getKey();
+        idCode.add(new Node("lw","a", offset, "al", null));
+
         return idCode;
+    }
+
+    @Override
+    public List<Node> visitDeclaration(SimpleParser.DeclarationContext ctx){
+        List<Node> codeDeclaration = new LinkedList<>();
+
+        if(ctx.type() == null){
+
+        } else {
+
+            String id = ctx.ID().getText();
+            List<Node> codeExp = visitExp(ctx.exp());
+
+            Pair<Integer, Integer> offsetAndNestingLevel =  simpleVTableWithOffset.getOffsetAndNestingLevel(id);
+
+            codeDeclaration.add(new Node("lw","al", 0,"fp",null));
+            for(int i = 0; i < nestingLevel - (int) offsetAndNestingLevel.getValue(); i++){
+                codeDeclaration.add(new Node("lw","al",0,"al",null));
+            }
+
+            int offset = (int) offsetAndNestingLevel.getKey();
+            codeDeclaration.add(new Node("sw","a", offset, "al", null));
+
+        }
+
+        return codeDeclaration;
     }
 
     private Node top(String register){

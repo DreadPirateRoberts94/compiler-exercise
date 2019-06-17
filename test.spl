@@ -1,11 +1,17 @@
 {
-    f(var int x, int y){
-        if (y== 0) then {
-            delete x;
-        } else {
-            x=x+y ;
-            int y = 2;
-        }
+    int x = 2;
 
+    int z = 3;
+
+    {
+        int h = 4;
     }
 }
+
+
+
+
+
+
+
+

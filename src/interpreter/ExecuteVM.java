@@ -7,7 +7,6 @@ public class ExecuteVM {
     private int[] memory = new int[MEMSIZE];
     private int ip = 0;         // ip = instruction pointer
     private int sp = MEMSIZE;   // sp = stack pointer
-    private int hp = 0;         // hp = heap pointer
     private int fp = MEMSIZE;   // fp = frame pointer
     private int ra;             // ra = return address
     private int al;             // al = access link

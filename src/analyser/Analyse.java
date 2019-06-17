@@ -3,6 +3,7 @@ package analyser;
 import java.io.IOException;
 import java.util.List;
 
+import interpreter.SimpleVisitorInterp;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import parser.*;
@@ -39,7 +40,12 @@ public class Analyse {
 			SimpleVisitorImpl visitor = new SimpleVisitorImpl();
 
 			//visit the root, this will recursively visit the whole tree
-			visitor.visitBlock(parser.block());
+			//visitor.visitBlock(parser.block());
+
+
+			SimpleVisitorInterp visitorInterp = new SimpleVisitorInterp();
+
+			visitorInterp.visitBlock(parser.block());
 
 
 		} catch (IOException e) {

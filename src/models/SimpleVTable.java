@@ -16,9 +16,9 @@ public class SimpleVTable {
 
     private int getUniqueIdentifier() { return uniqueIdentifier++; }
 
-    private List<HashMap> identifiersList = new LinkedList<HashMap>();
+    public List<HashMap> identifiersList = new LinkedList<HashMap>();
 
-    private List<HashMap> identifierAndAddress = new LinkedList<HashMap>();
+    public List<HashMap> identifierAndAddress = new LinkedList<HashMap>();
 
     public SimpleVTable() {}
 
@@ -59,7 +59,14 @@ public class SimpleVTable {
         return true;
     }
 
-
+    public int getUniqueIdentifier(String identifier){
+        for(int i = identifierAndAddress.size()-1; i >= 0; i--){
+            if(identifierAndAddress.get(i).get(identifier) != null){
+                return (int) identifierAndAddress.get(i).get(identifier);
+            }
+        }
+        return -1;
+    }
 
     public Boolean deleteIdentifier(String identifier){
         int addressToDelete = -1;
@@ -140,5 +147,6 @@ public class SimpleVTable {
         identifiersList.remove(identifiersList.size()-1);
         identifierAndAddress.remove(identifierAndAddress.size()-1);
     }
+
 }
 

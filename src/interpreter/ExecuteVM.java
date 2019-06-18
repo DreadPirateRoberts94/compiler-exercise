@@ -20,8 +20,13 @@ public class ExecuteVM {
     }
 
     public void run() {
+
+        System.out.println("\n\n\n\n\n\nCall Stack:\n");
         while (true) {
             Node bytecode = code[ip++]; // fetch
+
+            System.out.println("instr: " + (ip) + " " + bytecode.getInstr() + " arg1: "+ bytecode.getArg1()+" offset: "+bytecode.getOffset()+" arg2: "+ bytecode.getArg2()+" arg3: " + bytecode.getArg3());
+
             int r1, r2;
             boolean b1, b2;
             int address;
@@ -30,6 +35,7 @@ public class ExecuteVM {
 
             switch (bytecode.getInstr()) {
                 case ("print"):
+                    printStack();
                     System.out.println("\n OUTPUT: " + getRegister(bytecode.getArg1()));
                     break;
                 case ("li"):
@@ -127,11 +133,25 @@ public class ExecuteVM {
                 case ("b"):
                     setRegister("ip", bytecode.getOffset());
                     break;
+                case ("jr"):
+                    setRegister("ip", getRegister(bytecode.getArg1()));
+                    break;
+                case ("jal"):
+                    ra = ip;
+                    setRegister("ip", bytecode.getOffset());
+                    break;
                 case ("halt"):
                     return;
                 default:
                     break;
             }
+        }
+    }
+
+    private void printStack(){
+        System.out.println("\n");
+        for(int i = sp; i < MEMSIZE; i++){
+            System.out.println("Memory address: "+i+" content -> "+ memory[i]);
         }
     }
 
@@ -150,7 +170,7 @@ public class ExecuteVM {
             case("t"):
                 return t;
             default:
-                System.out.println("Registro non trovato!");
+                System.out.println("Registro "+ register +" non trovato!");
                 return 0;
         }
     }

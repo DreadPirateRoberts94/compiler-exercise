@@ -74,12 +74,12 @@ public class Analyse {
 						i++;
 						break;
 					case ("jal"):
-						labelRef.put(node.getArg3(), i);
+						labelRef.put(node.getArg1(), i);
 						code[i] = node;
 						i++;
 						break;
 					default:
-						if (node.getInstr().startsWith("label")){
+						if (node.getInstr().startsWith("label") || node.getInstr().startsWith("flabel")){
 							labelAdd.put(node.getInstr(), i);
 						} else {
 							code[i] = node;

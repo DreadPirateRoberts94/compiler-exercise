@@ -35,5 +35,7 @@ public class Node {
         return this.arg3;
     }
 
+    public void setOffset(Integer offset){ this.offset = offset; }
+
 }
 

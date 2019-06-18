@@ -36,7 +36,7 @@ public class SimpleVTableWithOffset extends SimpleVTable {
         int nestingLevel = identifierAndOffset.size();
         int offset = 0;
 
-        for(int i = identifierAndOffset.size()-1; i >= 0; i++){
+        for(int i = identifierAndOffset.size()-1; i >= 0; i--){
             if(identifierAndOffset.get(i).get(identifier) != null){
                 offset = (int) identifierAndOffset.get(i).get(identifier);
                 break;

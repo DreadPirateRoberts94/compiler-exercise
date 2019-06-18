@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import parser.SimpleBaseVisitor;
 import parser.SimpleParser;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -14,6 +15,8 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
     SimpleVTableWithOffset simpleVTableWithOffset = new SimpleVTableWithOffset();
 
     private int nestingLevel = 0;
+
+    private int labelCounter = 0;
 
     @Override
     public List<Node> visitStatement(SimpleParser.StatementContext ctx) {
@@ -30,14 +33,16 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
         List<String> variablesDeclared = visitBlockAndGetDeclaration(ctx);
 
-        List<Node> codeBlock = new LinkedList<>();
+        List<Node> codeBlock = new ArrayList<>();
 
         for(int i = variablesDeclared.size()-1; i >= 0; i--){
-            codeBlock.add(new Node("addi", "sp", 0, "sp", "-1"));
+            codeBlock.add(addi("sp", "sp", "-1"));
         }
 
+        codeBlock.add(move("fp", "sp"));
+
         //list for saving children statements
-        List<Node> statementCode = new LinkedList<>();
+        List<Node> statementCode = new ArrayList<>();
 
         //visit each children
         for (SimpleParser.StatementContext stmtCtx : ctx.statement()){
@@ -49,19 +54,18 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
         codeBlock.addAll(statementCode);
 
+        int i = 0;
         for (Node node: codeBlock) {
-            System.out.println("instr: " + node.getInstr() + " arg1: "+ node.getArg1()+" offset: "+node.getOffset()+" arg2: "+ node.getArg2()+" arg3: " + node.getArg3());
+            System.out.println("instr: " + (i++) + " " + node.getInstr() + " arg1: "+ node.getArg1()+" offset: "+node.getOffset()+" arg2: "+ node.getArg2()+" arg3: " + node.getArg3());
         }
-        System.out.println("\n\n\n");
-
 
         return codeBlock;
     }
 
 
-    public List<String> visitBlockAndGetDeclaration(SimpleParser.BlockContext ctx){
+    private List<String> visitBlockAndGetDeclaration(SimpleParser.BlockContext ctx){
 
-        List<String> variablesDeclared = new LinkedList<>();
+        List<String> variablesDeclared = new ArrayList<>();
 
         for (SimpleParser.StatementContext stmtCtx : ctx.statement()){
              //meaning that we have found a declaration
@@ -81,15 +85,41 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
     @Override
     public List<Node> visitPrint(SimpleParser.PrintContext ctx) {
+        List<Node> printCode = new ArrayList<>();
 
-        List<Node> nodeList = visitExp(ctx.exp());
+        List<Node> expCode = visitExp(ctx.exp());
 
-        return nodeList;
+        printCode.addAll(expCode);
+        printCode.add(print("a"));
+
+        return printCode;
+    }
+
+    @Override
+    public List<Node> visitIfthenelse(SimpleParser.IfthenelseContext ctx) {
+        List<Node> ifThenElseCode = new ArrayList();
+
+        String b_true = getFreshLabel();
+        String end_if = getFreshLabel();
+
+        List<Node> codeExp = visitExp(ctx.exp());
+        ifThenElseCode.addAll(codeExp);
+        ifThenElseCode.add(li("t", "1"));
+        ifThenElseCode.add(beq("a", "t", b_true));
+        List<Node> elseCode = visitBlock(ctx.block(1));
+        ifThenElseCode.addAll(elseCode);
+        ifThenElseCode.add(b(end_if));
+        ifThenElseCode.add(label(b_true));
+        List<Node> thenCode = visitBlock(ctx.block(0));
+        ifThenElseCode.addAll(thenCode);
+        ifThenElseCode.add(label(end_if));
+
+        return ifThenElseCode;
     }
 
     @Override
     public List<Node> visitExp(SimpleParser.ExpContext ctx){
-        List<Node> expCode = new LinkedList<>();
+        List<Node> expCode = new ArrayList<>();
 
         if(ctx.op == null){
             return visitTerm(ctx.left);
@@ -103,10 +133,11 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
             rightNodes = visitExp(ctx.right);
             expCode.addAll(rightNodes);
             expCode.add(top("t"));
+
             if (ctx.op.getText().equals("+")){
-                expCode.add(new Node("add", "a", 0, "a", "t"));
+                expCode.add(add("a", "a", "t"));
             } else {
-                expCode.add(new Node("sub", "a", 0, "t", "a"));
+                expCode.add(sub("a", "t", "a"));
             }
             expCode.add(pop());
 
@@ -120,7 +151,7 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
     @Override
     public List<Node> visitTerm(SimpleParser.TermContext ctx){
-        List<Node> termCode = new LinkedList<>();
+        List<Node> termCode = new ArrayList<>();
 
         if (ctx.op == null){
             return visitFactor(ctx.left);
@@ -135,9 +166,9 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
             termCode.addAll(rightNodes);
             termCode.add(top("t"));
             if(ctx.op.getText().equals("*")){
-                termCode.add(new Node("time", "a", 0, "a", "t"));
+                termCode.add(time("a", "a", "t"));
             } else {
-                termCode.add(new Node("divided", "a", 0, "a", "t")); // (a/t)
+                termCode.add(divide("a", "a", "t")); // (a/t)
             }
             termCode.add(pop());
 
@@ -151,7 +182,7 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
     @Override
     public List<Node> visitFactor(SimpleParser.FactorContext ctx){
-        List<Node> factorCode = new LinkedList<>();
+        List<Node> factorCode = new ArrayList<>();
 
         if(ctx.ROP() == null && ctx.op == null){
             return visitValue(ctx.left);
@@ -168,45 +199,44 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
             if (ctx.op.getText().equals("==")){
                 factorCode.add(new Node("eq", "a", 0, "a", "t"));
-            } else if (ctx.ROP().getText().equals("!=")){
+            } else if (ctx.op.getText().equals("!=")){
                 factorCode.add(new Node("noteq", "a", 0, "a", "t"));
-            } else if (ctx.ROP().getText().equals("<")){
+            } else if (ctx.op.getText().equals("<")){
                 factorCode.add(new Node("smaller", "a", 0, "a", "t"));
-            } else if (ctx.ROP().getText().equals(">")){
+            } else if (ctx.op.getText().equals(">")){
                 factorCode.add(new Node("greater", "a", 0, "a", "t"));
-            } else if (ctx.ROP().getText().equals(">=")){
+            } else if (ctx.op.getText().equals(">=")){
                 factorCode.add(new Node("smalleq", "a", 0, "a", "t"));
-            } else if (ctx.ROP().getText().equals("<=")){
+            } else if (ctx.op.getText().equals("<=")){
                 factorCode.add(new Node("greateq", "a", 0, "a", "t"));
             } else if (ctx.op.getText().equals("&&")){
                 factorCode.add(new Node("and", "a", 0, "a", "t"));
             } else if (ctx.op.getText().equals("||")){
                 factorCode.add(new Node("or", "a", 0, "a", "t"));
             }
-
             factorCode.add(pop());
+
             return factorCode;
         }
     }
 
     @Override
     public List<Node> visitValue(SimpleParser.ValueContext ctx){
-        List<Node> valueCode = new LinkedList<>();
+        List<Node> valueCode = new ArrayList<>();
 
         if(ctx.INTEGER() != null){
-            valueCode.add(new Node("lw", "a", 0, ctx.INTEGER().getText(), null));
+            valueCode.add(li("a", ctx.INTEGER().getText()));
             return valueCode;
         } else if (ctx.getText().equals("true")){
-            valueCode.add(new Node("lw", "a", 0, "1", null));
+            valueCode.add(li("a", "1"));
             return valueCode;
         } else if(ctx.getText().equals("false")){
-            valueCode.add(new Node("lw", "a", 0, "0", null));
+            valueCode.add(li("a", "0"));
             return valueCode;
         } else if (ctx.exp() != null){
             valueCode.addAll(visitExp(ctx.exp()));
             return valueCode;
         } else if (ctx.ID() != null){
-
             return visitId(ctx.ID().getText());
         }
 
@@ -215,41 +245,45 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
 
     public List<Node> visitId(String id){
-        List<Node> idCode = new LinkedList<>();
+        List<Node> idCode = new ArrayList<>();
 
         Pair<Integer, Integer> offsetAndNestingLevel =  simpleVTableWithOffset.getOffsetAndNestingLevel(id);
 
-        idCode.add(new Node("lw","al", 0,"fp",null));
+        idCode.add(lw("al", 0, "fp"));
         for(int i = 0; i < nestingLevel - (int) offsetAndNestingLevel.getValue(); i++){
-            idCode.add(new Node("lw","al",0,"al",null));
+            idCode.add(lw("al", 0, "al"));
         }
 
         int offset = (int) offsetAndNestingLevel.getKey();
-        idCode.add(new Node("lw","a", offset, "al", null));
+        idCode.add(lw("a", offset, "al"));
 
         return idCode;
     }
 
     @Override
     public List<Node> visitDeclaration(SimpleParser.DeclarationContext ctx){
-        List<Node> codeDeclaration = new LinkedList<>();
+        List<Node> codeDeclaration = new ArrayList<>();
 
         if(ctx.type() == null){
-
+            String f_entry = getFreshLabel();
         } else {
 
             String id = ctx.ID().getText();
+
             List<Node> codeExp = visitExp(ctx.exp());
+
+            codeDeclaration.addAll(codeExp);
 
             Pair<Integer, Integer> offsetAndNestingLevel =  simpleVTableWithOffset.getOffsetAndNestingLevel(id);
 
-            codeDeclaration.add(new Node("lw","al", 0,"fp",null));
-            for(int i = 0; i < nestingLevel - (int) offsetAndNestingLevel.getValue(); i++){
-                codeDeclaration.add(new Node("lw","al",0,"al",null));
+            codeDeclaration.add(lw("al", 0, "fp"));
+
+            for(int i = 0; i < nestingLevel - offsetAndNestingLevel.getValue(); i++){
+                codeDeclaration.add(lw("al", 0, "al"));
             }
 
-            int offset = (int) offsetAndNestingLevel.getKey();
-            codeDeclaration.add(new Node("sw","a", offset, "al", null));
+            int offset = offsetAndNestingLevel.getKey();
+            codeDeclaration.add(sw("a", offset, "al"));
 
         }
 
@@ -257,19 +291,74 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
     }
 
     private Node top(String register){
-        return new Node("lw", register, 0, "sp", null);
+        return lw(register, 0, "sp");
     }
 
     private Node pop(){
-        return new Node("addi", "sp", 0, "sp", "1");
+        return addi("sp", "sp", "1");
     }
 
     private List<Node> push(String register){
-        List<Node> pushCode = new LinkedList<>();
-        pushCode.add(new Node("addi", "sp", 0, "sp", "-1"));
-        pushCode.add(new Node("sw", register, 0, "sp", null));
+        List<Node> pushCode = new ArrayList<>();
+        pushCode.add(addi("sp", "sp", "-1"));
+        pushCode.add(sw(register, 0, "sp"));
         return pushCode;
     }
 
+    private Node lw(String arg1, Integer offset, String arg2){
+        return new Node ("lw", arg1, offset, arg2, null);
+    }
+
+    private Node li(String arg1, String arg2){
+        return new Node ("li", arg1, null, arg2, null);
+    }
+
+    private Node sw(String arg1, Integer offset, String arg2){
+        return new Node ("sw", arg1, offset, arg2, null);
+    }
+
+    private Node addi(String arg1, String arg2, String arg3){
+        return new Node ("addi", arg1, null, arg2, arg3);
+    }
+
+    private Node add(String arg1, String arg2, String arg3){
+        return new Node ("add", arg1, null, arg2, arg3);
+    }
+
+    private Node sub(String arg1, String arg2, String arg3) {
+        return new Node("sub", arg1, null, arg2, arg3);
+    }
+
+    private Node move(String arg1, String arg2) {
+        return new Node("move", arg1, null, arg2, null);
+    }
+
+    private Node print(String arg1) {
+        return new Node("print", arg1, null, null, null);
+    }
+
+    private Node time(String arg1, String arg2, String arg3) {
+        return new Node("time", arg1, null, arg2, arg3);
+    }
+
+    private Node divide(String arg1, String arg2, String arg3) {
+        return new Node("divide", arg1, null, arg2, arg3);
+    }
+
+    private Node beq(String arg1, String arg2, String arg3) {
+        return new Node("beq", arg1, null, arg2, arg3);
+    }
+
+    private Node label(String label) {
+        return new Node(label, null, null, null, null);
+    }
+
+    private Node b(String label) {
+        return new Node("b", label, null, null, null);
+    }
+
+    private String getFreshLabel(){
+        return "label" + labelCounter++;
+    }
 
 }

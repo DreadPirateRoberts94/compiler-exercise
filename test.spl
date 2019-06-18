@@ -1,13 +1,11 @@
 {
-    int x = 2;
-
-    int z = 3;
-
-    {
-        int h = 4;
+    if((false||true) && (2==1))then{
+        print 1;
+    } else {
+        print 0;
     }
-}
 
+}
 
 
 

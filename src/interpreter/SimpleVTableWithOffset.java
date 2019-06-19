@@ -34,17 +34,18 @@ public class SimpleVTableWithOffset extends SimpleVTable {
 
     public Pair getOffsetAndNestingLevel(String identifier){
         int nestingLevel = identifierAndOffset.size();
-        int offset = 0;
+        int offset = 1;
 
         for(int i = identifierAndOffset.size()-1; i >= 0; i--){
             if(identifierAndOffset.get(i).get(identifier) != null){
                 offset = (int) identifierAndOffset.get(i).get(identifier);
-                break;
+                return new Pair(offset, nestingLevel);
+
             }
             nestingLevel--;
         }
 
-        return new Pair(offset, nestingLevel);
+        return null;
     }
 
     @Override

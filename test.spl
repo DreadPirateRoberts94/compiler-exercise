@@ -1,12 +1,8 @@
 {
 
-   f(int x) {
-    print x;
-   }
+   int l = 100;
 
-
-   f(10);
-
+   print l;
 }
 
 

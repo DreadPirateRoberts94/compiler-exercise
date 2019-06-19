@@ -8,8 +8,8 @@ public class ExecuteVM {
     private Node[] code;
     private int[] memory = new int[MEMSIZE];
     private int ip = 0;         // ip = instruction pointer
-    private int sp = MEMSIZE-1;   // sp = stack pointer
-    private int fp = MEMSIZE-1;   // fp = frame pointer
+    private int sp = MEMSIZE;   // sp = stack pointer
+    private int fp = MEMSIZE;   // fp = frame pointer
     private int ra;             // ra = return address
     private int al;             // al = access link
     private int a;              // a = stores the value of an exp
@@ -25,7 +25,9 @@ public class ExecuteVM {
         while (true) {
             Node bytecode = code[ip++]; // fetch
 
-            System.out.println("instr: " + (ip) + " " + bytecode.getInstr() + " arg1: "+ bytecode.getArg1()+" offset: "+bytecode.getOffset()+" arg2: "+ bytecode.getArg2()+" arg3: " + bytecode.getArg3());
+
+            System.out.println("instr: " + (ip) + " " + bytecode.getInstr() + " arg1: "+ bytecode.getArg1()+" offset: "+bytecode.getOffset()+" arg2: "+ bytecode.getArg2()+" arg3: " + bytecode.getArg3()+"\n");
+
 
             int r1, r2;
             boolean b1, b2;
@@ -33,10 +35,10 @@ public class ExecuteVM {
             int offset;
             int i;
 
+
             switch (bytecode.getInstr()) {
                 case ("print"):
-                    printStack();
-                    System.out.println("\n OUTPUT: " + getRegister(bytecode.getArg1()));
+                    System.out.println("\nOUTPUT: " + getRegister(bytecode.getArg1()));
                     break;
                 case ("li"):
                     i = getIntFromString(bytecode.getArg2());
@@ -145,14 +147,19 @@ public class ExecuteVM {
                 default:
                     break;
             }
+
+            printStack();
+            System.out.println("fp: "+ fp+ " ip: "+ ip + " ra: "+ ra + " a: " + a + " t "+ t +" al: " + al + " ip: " + ip +" sp: "+sp + "\n");
+
         }
     }
 
     private void printStack(){
-        System.out.println("\n");
         for(int i = sp; i < MEMSIZE; i++){
             System.out.println("Memory address: "+i+" content -> "+ memory[i]);
         }
+        System.out.println("\n\n");
+
     }
 
     private int getRegister(String register){

@@ -373,10 +373,6 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
         List<SimpleParser.ExpContext> paramsList = ctx.exp();
 
-        //functionCallCode.addAll(push("fp"));
-        //functionCallCode.add(move("fp","sp"));
-
-
         simpleVTableWithOffset.scopeEntry();
 
         //loading parameters

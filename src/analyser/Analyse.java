@@ -2,6 +2,7 @@ package analyser;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +47,6 @@ public class Analyse {
 			//visit the root, this will recursively visit the whole tree
 			//visitor.visitBlock(parser.block());
 
-
 			SimpleVisitorInterp visitorInterp = new SimpleVisitorInterp();
 
 			List<Node> codeList = visitorInterp.visitBlock(parser.block());
@@ -58,42 +58,66 @@ public class Analyse {
 			code = codeList.toArray(code);
 
 			HashMap<String, Integer> labelAdd = new HashMap<>();
-			HashMap<String, Integer> labelRef = new HashMap<>();
+			HashMap<String, List<Integer>> labelRef = new HashMap<>();
+			List<Integer> indexList = new LinkedList<>();
 
 			int i = 0;
 			for (Node node: codeList) {
 				switch (node.getInstr()){
 					case ("beq"):
-						labelRef.put(node.getArg3(), i);
+						indexList = labelRef.get(node.getArg3());
+						if (indexList != null){
+							indexList.add(i);
+						} else {
+							indexList = new LinkedList<>();
+							indexList.add(i);
+						}
+						labelRef.put(node.getArg3(), indexList);
 						code[i] = node;
 						i++;
 						break;
 					case ("b"):
-						labelRef.put(node.getArg1(), i);
+						indexList = labelRef.get(node.getArg1());
+						if (indexList != null){
+							indexList.add(i);
+						} else {
+							indexList = new LinkedList<>();
+							indexList.add(i);
+						}
+						labelRef.put(node.getArg1(), indexList);
 						code[i] = node;
 						i++;
 						break;
 					case ("jal"):
-						labelRef.put(node.getArg1(), i);
+						indexList = labelRef.get(node.getArg1());
+						if (indexList != null){
+							indexList.add(i);
+						} else {
+							indexList = new LinkedList<>();
+							indexList.add(i);
+						}
+						labelRef.put(node.getArg1(), indexList);
 						code[i] = node;
 						i++;
 						break;
 					default:
 						if (node.getInstr().startsWith("label") || node.getInstr().startsWith("flabel")){
 							labelAdd.put(node.getInstr(), i);
+							break;
 						} else {
 							code[i] = node;
 							i++;
+							break;
 						}
-						break;
 				}
 			}
 
-			Map<String, Integer> mapRef = new HashMap<>(labelRef);
+			Map<String, List<Integer>> mapRef = new HashMap<>(labelRef);
 
-			for (Map.Entry<String, Integer> entry: mapRef.entrySet()) {
-				int index = entry.getValue();
-				code[index].setOffset(labelAdd.get(entry.getKey()));
+			for (Map.Entry<String, List<Integer>> entry: mapRef.entrySet()) {
+				for (Integer index: entry.getValue()) {
+					code[index].setOffset(labelAdd.get(entry.getKey()));
+				}
 			}
 
 			ExecuteVM vm = new ExecuteVM(code);

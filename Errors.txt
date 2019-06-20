@@ -1,0 +1,3 @@
+syntax-error - line: 11, position: 4, message: missing ';' at 'f'
+syntax-error - line: 12, position: 4, message: missing ';' at 'f'
+syntax-error - line: 13, position: 0, message: missing ';' at '}'

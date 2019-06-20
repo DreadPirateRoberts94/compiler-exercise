@@ -2,7 +2,14 @@
 
    int l = 100;
 
-   print l;
+   f(int x){
+     print x;
+
+   }
+
+    f(l)
+    f(l)
+    f(l)
 }
 
 

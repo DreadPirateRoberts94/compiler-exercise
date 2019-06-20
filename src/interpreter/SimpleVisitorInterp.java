@@ -24,6 +24,8 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
     private int insideDeclaration = 0;
 
+    private String functionCalled;
+
     @Override
     public List<Node> visitStatement(SimpleParser.StatementContext ctx) {
         //visit the first child, this works for every case
@@ -32,7 +34,7 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
 
     @Override
-        public List<Node> visitBlock(SimpleParser.BlockContext ctx) {
+    public List<Node> visitBlock(SimpleParser.BlockContext ctx) {
 
         List<Node> codeBlock = new ArrayList<>();
 
@@ -43,7 +45,6 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
             simpleFTableWithLabel.scopeEntry();
             nestingLevel++;
             variablesDeclared = visitBlockAndGetDeclaration(ctx);
-            System.out.println(variablesDeclared);
 
             for(int i = variablesDeclared.size()-1; i >= 0; i--){
                 codeBlock.add(addi("sp", "sp", "-1"));
@@ -96,8 +97,8 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
         List<String> variablesDeclared = new ArrayList<>();
 
         for (SimpleParser.StatementContext stmtCtx : ctx.statement()){
-             //meaning that we have found a declaration
-             if(stmtCtx.getChild(0).getClass() == SimpleParser.DeclarationContext.class ){
+            //meaning that we have found a declaration
+            if(stmtCtx.getChild(0).getClass() == SimpleParser.DeclarationContext.class ){
                 SimpleParser.DeclarationContext declaration = (SimpleParser.DeclarationContext) stmtCtx.getChild(0);
                 if(declaration.type() != null){
                     //getting the variable identifier
@@ -105,7 +106,7 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
                     simpleVTableWithOffset.varDeclaration(declaration.ID().getText());
                 }
-             }
+            }
         }
 
 
@@ -276,7 +277,6 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
     public List<Node> visitId(String id){
         List<Node> idCode = new ArrayList<>();
         Pair<Integer, Integer> offsetAndNestingLevel =  simpleVTableWithOffset.getOffsetAndNestingLevel(id);
-        System.out.println(id+ "<offset, nestingLevel> = "+ offsetAndNestingLevel.getKey() + " " +offsetAndNestingLevel.getValue());
         idCode.add(move("al", "fp"));
         for(int i = 0; i < nestingLevel - (int) offsetAndNestingLevel.getValue(); i++){
             idCode.add(lw("al", 0, "al"));
@@ -284,12 +284,6 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
         int offset = (int) offsetAndNestingLevel.getKey();
         idCode.add(lw("a", offset, "al"));
-        System.out.println("id cooodeeeee\n");
-
-        for (Node node: idCode) {
-            System.out.println("instr: " + " " + node.getInstr() + " arg1: "+ node.getArg1()+" offset: "+node.getOffset()+" arg2: "+ node.getArg2()+" arg3: " + node.getArg3());
-        }
-        System.out.println("\n\n\n\n");
 
         return idCode;
     }
@@ -322,25 +316,33 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
             }
 
             String freshLabel = simpleFTableWithLabel.newFunctionDeclaration(ctx.ID().getText(), paramsList);
-           codeDeclaration.add(label(freshLabel));
-           codeDeclaration.add(move("fp", "sp"));
+            codeDeclaration.add(label(freshLabel));
+            codeDeclaration.add(move("fp", "sp"));
 
             codeDeclaration.addAll(push("ra"));
 
-           codeDeclaration.addAll(visitBlock(ctx.block()));
-           codeDeclaration.add(top("ra"));
-           for (int i = 0; i < paramsList.size(); i++) {
-               codeDeclaration.add(addi("sp", "sp", "1"));
-           }
-           codeDeclaration.add(top("fp"));
-           codeDeclaration.add(pop());
-           codeDeclaration.add(jr("ra"));
+            codeDeclaration.addAll(visitBlock(ctx.block()));
 
-           codeDeclaration.add(label(endFunctionLabel));
+            codeDeclaration.add(top("ra"));
+            for (int i = 0; i < paramsList.size(); i++) {
+                codeDeclaration.add(addi("sp", "sp", "1"));
+            }
+            codeDeclaration.add(top("fp"));
+            codeDeclaration.add(pop());
+            codeDeclaration.add(jr("ra"));
 
-           insideDeclaration--;
-           nestingLevel--;
-           simpleVTableWithOffset.scopeExit();
+            codeDeclaration.add(label(endFunctionLabel));
+
+
+            System.out.println("Function declared: "+ ctx.ID().getText());
+            for (Node node: codeDeclaration) {
+                System.out.println("instr: " + " " + node.getInstr() + " arg1: "+ node.getArg1()+" offset: "+node.getOffset()+" arg2: "+ node.getArg2()+" arg3: " + node.getArg3());
+            }
+
+
+            insideDeclaration--;
+            nestingLevel--;
+            simpleVTableWithOffset.scopeExit();
 
 
         } else {
@@ -374,7 +376,7 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
         List<SimpleParser.ExpContext> paramsList = ctx.exp();
 
         simpleVTableWithOffset.scopeEntry();
-
+        functionCalled = ctx.ID().getText();
         //loading parameters
         for(int i = paramsList.size()-1; i >= 0; i--){
             functionCallCode.addAll(visitExp(paramsList.get(i)));
@@ -385,13 +387,12 @@ public class SimpleVisitorInterp extends SimpleBaseVisitor<List<Node>> {
 
         functionCallCode.add(move("al","fp"));
 
-        System.out.println(nestingLevel +" " + simpleFTableWithLabel.getNestingLevel(ctx.ID().getText()));
-
         for(int i = 0; i < nestingLevel - simpleFTableWithLabel.getNestingLevel(ctx.ID().getText()); i++){
             functionCallCode.add(lw("al",0,"al"));
         }
         functionCallCode.addAll(push("al"));
 
+        functionCalled = null;
         simpleVTableWithOffset.scopeExit();
 
         String functionLabel = simpleFTableWithLabel.getFunctionLabel(ctx.ID().getText());

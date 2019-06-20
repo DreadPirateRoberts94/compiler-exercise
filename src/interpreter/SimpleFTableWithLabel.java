@@ -14,38 +14,38 @@ public class SimpleFTableWithLabel{
 
     private List<HashMap> identifierAndLabel = new LinkedList<>();
 
-    private List<HashMap> identifierAndParams = new LinkedList<>();
+    private List<HashMap> identifierAndVariablesDeclared = new LinkedList<>();
 
     public void scopeEntry() {
         identifierAndLabel.add(new HashMap());
-        identifierAndParams.add(new HashMap());
+        identifierAndVariablesDeclared.add(new HashMap());
     }
 
-    public String newFunctionDeclaration(String identifier, List<String> paramsList){
+    public String newFunctionDeclaration(String identifier, List<String> variablesDeclared){
         int blockNumber = identifierAndLabel.size()-1;
         String freshLabel = getFreshLabel();
-        identifierAndParams.get(blockNumber).put(identifier, paramsList);
+        identifierAndVariablesDeclared.get(blockNumber).put(identifier, variablesDeclared);
         identifierAndLabel.get(blockNumber).put(identifier, freshLabel);
 
         return freshLabel;
     }
 
-    public List<String> getParamsList(String identifier){
-        for(int i = identifierAndParams.size()-1; i >= 0; i--){
-            if(identifierAndParams.get(i) != null){
-                return (List<String>) identifierAndParams.get(i).get(identifier);
+    public String getFunctionLabel(String identifier){
+        for(int i = identifierAndLabel.size()-1; i >= 0; i--){
+            if(identifierAndLabel.get(i).get(identifier) != null){
+                return (String) identifierAndLabel.get(i).get(identifier);
             }
         }
         return null;
     }
 
-    public String getFunctionLabel(String identifier){
-        for(int i = identifierAndLabel.size()-1; i >= 0; i--){
-            if(identifierAndLabel.get(i) != null){
-                return (String) identifierAndLabel.get(i).get(identifier);
+    public List<String> getVariablesDeclared(String identifier){
+            for(int i = identifierAndVariablesDeclared.size()-1; i >= 0; i--){
+                if(identifierAndVariablesDeclared.get(i) != null){
+                    return (List<String>) identifierAndVariablesDeclared.get(i).get(identifier);
+                }
             }
-        }
-        return null;
+            return null;
     }
 
     public int getNestingLevel(String identifier){
@@ -63,7 +63,7 @@ public class SimpleFTableWithLabel{
 
     public void scopeExit() {
         identifierAndLabel.remove(identifierAndLabel.size()-1);
-        identifierAndParams.remove(identifierAndParams.size()-1);
+        identifierAndVariablesDeclared.remove(identifierAndVariablesDeclared.size()-1);
     }
 
 }

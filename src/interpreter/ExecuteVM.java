@@ -18,11 +18,19 @@ public class ExecuteVM {
     public ExecuteVM(Node[] code) {
         this.code = code;
     }
-
+    int max = 0;
     public void run() {
+
+
+
 
         System.out.println("\n\n\n\n\n\nCall Stack:\n");
         while (true) {
+
+            max++;
+
+            if(max > 1000){ break; }
+
             Node bytecode = code[ip++]; // fetch
 
 
@@ -108,12 +116,12 @@ public class ExecuteVM {
                 case ("smaller"):
                     r1 = getRegister(bytecode.getArg2());
                     r2 = getRegister(bytecode.getArg3());
-                    setRegister(bytecode.getArg1(), getIntFromBool(r1<r2));
+                    setRegister(bytecode.getArg1(), getIntFromBool(r1>r2));
                     break;
                 case ("greater"):
                     r1 = getRegister(bytecode.getArg2());
                     r2 = getRegister(bytecode.getArg3());
-                    setRegister(bytecode.getArg1(), getIntFromBool(r1>r2));
+                    setRegister(bytecode.getArg1(), getIntFromBool(r1<r2));
                     break;
                 case ("smalleq"):
                     r1 = getRegister(bytecode.getArg2());

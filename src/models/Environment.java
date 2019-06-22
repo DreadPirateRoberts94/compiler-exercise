@@ -9,9 +9,6 @@ public class Environment {
 	//this linked list is used as a stack with LIFO behavior
 	LinkedList<HashMap<String, Integer>> scopes = new LinkedList<HashMap<String,Integer>>();
 	
-	
-	
-	
 	/**
 	 * Adds variable with the given id to existence	
 	 * @param id

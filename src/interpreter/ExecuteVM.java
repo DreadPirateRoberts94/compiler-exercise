@@ -27,10 +27,6 @@ public class ExecuteVM {
         System.out.println("\n\n\n\n\n\nCall Stack:\n");
         while (true) {
 
-            max++;
-
-            if(max > 1000){ break; }
-
             Node bytecode = code[ip++]; // fetch
 
 

@@ -59,15 +59,6 @@ public class SimpleVTable {
         return true;
     }
 
-    public int getUniqueIdentifier(String identifier){
-        for(int i = identifierAndAddress.size()-1; i >= 0; i--){
-            if(identifierAndAddress.get(i).get(identifier) != null){
-                return (int) identifierAndAddress.get(i).get(identifier);
-            }
-        }
-        return -1;
-    }
-
     public Boolean deleteIdentifier(String identifier){
         int addressToDelete = -1;
         for(int i = identifiersList.size()-1; i >= 0; i--){

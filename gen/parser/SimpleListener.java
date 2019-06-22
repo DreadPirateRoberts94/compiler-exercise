@@ -1,4 +1,4 @@
-// Generated from /Users/simone/Desktop/compiler-exercise/src/parser/Simple.g4 by ANTLR 4.7.2
+// Generated from /Users/giovannifabbretti/Desktop/Università/Magistrale/Primo anno/Secondo semestre/Compilatori e interpreti/Homework ultima es/src/parser/Simple.g4 by ANTLR 4.7.2
 package parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

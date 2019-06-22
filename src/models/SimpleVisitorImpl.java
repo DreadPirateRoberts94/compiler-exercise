@@ -295,7 +295,6 @@ public class SimpleVisitorImpl extends SimpleBaseVisitor<SimpleElementBase> {
 		} else {
 			type = "err";
 		}
-
 		return new SimpleStmtExp(type);
 	}
 
